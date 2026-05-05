@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triagem de Currículos — RH</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root {
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EFE9;
+    --border: #DDDBD3;
+    --border-strong: #B8B5AB;
+    --text: #1A1917;
+    --text-muted: #6B6860;
+    --text-hint: #9E9C96;
+    --accent: #1A1917;
+    --accent-fg: #F5F4F0;
+    --blue: #1A4A8A;
+    --blue-bg: #E8EFF8;
+    --blue-border: #C5D5EB;
+    --green: #1E6B45;
+    --green-bg: #E8F5EE;
+    --green-border: #A8D5BC;
+    --amber: #7A4A00;
+    --amber-bg: #FDF3DC;
+    --amber-border: #E8D4A0;
+    --red: #8A1A1A;
+    --red-bg: #F8E8E8;
+    --red-border: #E8B8B8;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+
+  /* HEADER */
+  header { background: var(--accent); color: var(--accent-fg); padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn { font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.02em; transition: color 0.15s; }
+  .back-btn:hover { color: rgba(255,255,255,0.9); }
+  .header-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+  .header-title { font-size: 14px; font-weight: 500; }
+  .header-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.35; letter-spacing: 0.05em; }
+
+  /* LAYOUT */
+  .main { max-width: 960px; margin: 0 auto; padding: 36px 40px 80px; }
+
+  /* SECTION */
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px 26px; margin-bottom: 16px; }
+  .section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-hint); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* GRID */
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  /* FIELDS */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+  .field input, .field select, .field textarea {
+    padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; font-family: 'IBM Plex Sans', sans-serif; color: var(--text);
+    background: var(--surface); transition: border-color 0.15s; width: 100%; resize: vertical;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--text); }
+  .field .hint { font-size: 11px; color: var(--text-hint); }
+
+  /* DROP ZONE */
+  .drop-zone {
+    border: 1.5px dashed var(--border-strong); border-radius: var(--radius-lg);
+    padding: 36px 24px; text-align: center; cursor: pointer; transition: all 0.2s;
+    background: var(--surface2);
+  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--text); background: var(--bg); }
+  .drop-zone .dz-icon { font-size: 28px; margin-bottom: 10px; }
+  .drop-zone .dz-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .drop-zone .dz-sub { font-size: 12px; color: var(--text-hint); }
+  .drop-zone input[type=file] { display: none; }
+
+  /* FILE LIST */
+  .file-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .file-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 9px 12px;
+  }
+  .file-item .fi-icon { font-size: 15px; flex-shrink: 0; }
+  .file-item .fi-name { flex: 1; font-size: 13px; color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-item .fi-size { font-size: 11px; color: var(--text-hint); font-family: 'IBM Plex Mono', monospace; flex-shrink: 0; }
+  .file-item .fi-status { font-size: 11px; padding: 2px 8px; border-radius: 99px; flex-shrink: 0; }
+  .fi-status.ok { background: var(--green-bg); color: var(--green); }
+  .fi-status.reading { background: var(--amber-bg); color: var(--amber); }
+  .fi-status.err { background: var(--red-bg); color: var(--red); }
+  .file-item .fi-remove { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 16px; line-height: 1; padding: 0 2px; transition: color 0.15s; flex-shrink: 0; }
+  .file-item .fi-remove:hover { color: var(--red); }
+
+  /* CRITERIA */
+  .criteria-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 4px; }
+  .criteria-item { display: flex; flex-direction: column; gap: 5px; }
+  .criteria-item label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .criteria-item input[type=range] { width: 100%; }
+  .criteria-item .cval { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); }
+
+  /* BUTTON */
+  .btn-primary {
+    width: 100%; padding: 13px; background: var(--accent); color: var(--accent-fg);
+    border: none; border-radius: var(--radius); font-size: 15px; font-weight: 500;
+    font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; transition: opacity 0.15s;
+    letter-spacing: 0.01em; margin-top: 8px;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* LOADING */
+  .loading-box { display: none; text-align: center; padding: 40px 24px; }
+  .loading-box.show { display: block; }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-box p { font-size: 14px; color: var(--text-muted); }
+  .loading-box .loading-step { font-size: 12px; color: var(--text-hint); margin-top: 6px; font-family: 'IBM Plex Mono', monospace; }
+
+  /* RESULTS */
+  .results { display: none; }
+  .results.show { display: block; }
+  .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .results-header h2 { font-size: 18px; font-weight: 500; }
+  .results-meta { font-size: 12px; color: var(--text-hint); font-family: 'IBM Plex Mono', monospace; }
+  .btn-reset { padding: 8px 16px; background: none; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; color: var(--text-muted); transition: all 0.15s; }
+  .btn-reset:hover { border-color: var(--text); color: var(--text); }
+
+  /* CANDIDATE CARD */
+  .candidate-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; }
+  .candidate-card.rank-1 { border-color: var(--green-border); }
+  .candidate-card.rank-2 { border-color: var(--blue-border); }
+  .candidate-card.rank-3 { border-color: var(--amber-border); }
+
+  .cand-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; cursor: pointer; user-select: none; }
+  .rank-badge { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
+  .rank-1 .rank-badge { background: var(--green-bg); color: var(--green); }
+  .rank-2 .rank-badge { background: var(--blue-bg); color: var(--blue); }
+  .rank-3 .rank-badge { background: var(--amber-bg); color: var(--amber); }
+  .rank-n .rank-badge { background: var(--surface2); color: var(--text-muted); }
+
+  .cand-info { flex: 1; min-width: 0; }
+  .cand-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .cand-sub { font-size: 12px; color: var(--text-hint); margin-top: 2px; }
+
+  .score-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .score-bar-wrap { width: 80px; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 99px; background: var(--text); }
+  .rank-1 .score-bar { background: var(--green); }
+  .rank-2 .score-bar { background: var(--blue); }
+  .rank-3 .score-bar { background: var(--amber); }
+  .score-num { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500; min-width: 32px; text-align: right; }
+
+  .expand-icon { color: var(--text-hint); font-size: 12px; transition: transform 0.2s; flex-shrink: 0; }
+  .candidate-card.open .expand-icon { transform: rotate(180deg); }
+
+  .cand-body { display: none; padding: 0 20px 18px; border-top: 1px solid var(--border); }
+  .candidate-card.open .cand-body { display: block; }
+
+  .cand-summary { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 14px 0; }
+
+  .scores-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
+  .score-item { background: var(--surface2); border-radius: var(--radius); padding: 10px 12px; }
+  .score-item .si-label { font-size: 10px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .score-item .si-val { font-size: 18px; font-weight: 500; font-family: 'IBM Plex Mono', monospace; }
+
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pros, .cons { border-radius: var(--radius); padding: 12px 14px; }
+  .pros { background: var(--green-bg); }
+  .cons { background: var(--red-bg); }
+  .pros .pc-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--green); margin-bottom: 8px; }
+  .cons .pc-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+  .pc-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .pc-list li { font-size: 12px; line-height: 1.4; display: flex; gap: 6px; }
+  .pros .pc-list li { color: var(--green); }
+  .cons .pc-list li { color: var(--red); }
+  .pc-list li::before { flex-shrink: 0; font-size: 10px; margin-top: 2px; }
+  .pros .pc-list li::before { content: '✓'; }
+  .cons .pc-list li::before { content: '✗'; }
+
+  .info-box { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: var(--radius); padding: 11px 14px; font-size: 12px; color: var(--blue); line-height: 1.5; margin-bottom: 16px; }
+
+  @media (max-width: 680px) {
+    .main { padding: 20px 16px 60px; }
+    header { padding: 0 16px; }
+    .cols-2, .cols-3 { grid-template-columns: 1fr; }
+    .criteria-grid { grid-template-columns: 1fr 1fr; }
+    .scores-grid { grid-template-columns: 1fr 1fr; }
+    .pros-cons { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a class="back-btn" href="index.html">← voltar</a>
+    <div class="header-sep"></div>
+    <span class="header-title">Triagem de Currículos</span>
+  </div>
+  <span class="header-tag">RH · IA</span>
+</header>
+
+<div class="main">
+
+  <!-- FORMULÁRIO -->
+  <div id="form-area">
+
+    <!-- VAGA -->
+    <div class="section">
+      <div class="section-title">Dados da vaga</div>
+      <div class="cols-2" style="margin-bottom:14px">
+        <div class="field">
+          <label>Cargo</label>
+          <input type="text" id="cargo" placeholder="Ex: Analista de RH Pleno">
+        </div>
+        <div class="field">
+          <label>Área / Departamento</label>
+          <input type="text" id="area" placeholder="Ex: Recursos Humanos">
+        </div>
+      </div>
+      <div class="cols-3" style="margin-bottom:14px">
+        <div class="field">
+          <label>Localização</label>
+          <input type="text" id="localizacao" placeholder="Ex: São Paulo, SP">
+        </div>
+        <div class="field">
+          <label>Regime</label>
+          <select id="regime">
+            <option>CLT</option>
+            <option>PJ</option>
+            <option>Híbrido</option>
+            <option>Remoto</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Faixa salarial</label>
+          <input type="text" id="salario" placeholder="Ex: R$ 4.000 – R$ 6.000">
+        </div>
+      </div>
+      <div class="field">
+        <label>Descrição completa da vaga</label>
+        <textarea id="descricao" rows="6" placeholder="Cole aqui a descrição da vaga — requisitos obrigatórios, desejáveis, responsabilidades, perfil comportamental..."></textarea>
+      </div>
+    </div>
+
+    <!-- PESOS -->
+    <div class="section">
+      <div class="section-title">Peso de cada critério na avaliação</div>
+      <div class="criteria-grid">
+        <div class="criteria-item">
+          <label>Experiência</label>
+          <input type="range" id="peso-exp" min="1" max="5" value="5" oninput="updatePeso('exp')">
+          <span class="cval" id="val-exp">5</span>
+        </div>
+        <div class="criteria-item">
+          <label>Formação</label>
+          <input type="range" id="peso-form" min="1" max="5" value="3" oninput="updatePeso('form')">
+          <span class="cval" id="val-form">3</span>
+        </div>
+        <div class="criteria-item">
+          <label>Habilidades técnicas</label>
+          <input type="range" id="peso-tec" min="1" max="5" value="4" oninput="updatePeso('tec')">
+          <span class="cval" id="val-tec">4</span>
+        </div>
+        <div class="criteria-item">
+          <label>Localização</label>
+          <input type="range" id="peso-loc" min="1" max="5" value="2" oninput="updatePeso('loc')">
+          <span class="cval" id="val-loc">2</span>
+        </div>
+        <div class="criteria-item">
+          <label>Pretensão salarial</label>
+          <input type="range" id="peso-sal" min="1" max="5" value="3" oninput="updatePeso('sal')">
+          <span class="cval" id="val-sal">3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="section">
+      <div class="section-title">Currículos (PDF)</div>
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <input type="file" id="file-input" accept=".pdf" multiple onchange="handleFiles(this.files)">
+        <div class="dz-icon">📄</div>
+        <div class="dz-title">Clique ou arraste os PDFs aqui</div>
+        <div class="dz-sub">Múltiplos arquivos permitidos · somente .pdf</div>
+      </div>
+      <div class="file-list" id="file-list"></div>
+    </div>
+
+    <button class="btn-primary" id="btn-analisar" onclick="analisar()" disabled>Analisar currículos com IA</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="section loading-box" id="loading-box">
+    <div class="spinner"></div>
+    <p>Analisando currículos...</p>
+    <div class="loading-step" id="loading-step">Lendo PDFs</div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="results" id="results-area">
+    <div class="results-header">
+      <div>
+        <h2>Ranking de candidatos</h2>
+        <div class="results-meta" id="results-meta"></div>
+      </div>
+      <button class="btn-reset" onclick="resetar()">← Nova triagem</button>
+    </div>
+    <div class="info-box" id="results-info"></div>
+    <div id="cards-container"></div>
+  </div>
+
+</div>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  let curriculos = []; // {name, text, size}
+
+  function updatePeso(key) {
+    document.getElementById('val-' + key).textContent = document.getElementById('peso-' + key).value;
+  }
+
+  // ===== DRAG & DROP =====
+  function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+  function handleDragLeave(e) { document.getElementById('drop-zone').classList.remove('drag-over'); }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  }
+
+  function handleFiles(files) {
+    Array.from(files).forEach(f => {
+      if (f.type !== 'application/pdf') return;
+      if (curriculos.find(c => c.name === f.name)) return;
+      const entry = { name: f.name, text: '', size: f.size, status: 'reading' };
+      curriculos.push(entry);
+      renderFileList();
+      extractPDF(f, entry);
+    });
+  }
+
+  function extractPDF(file, entry) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const pdf = await pdfjsLib.getDocument({ data: e.target.result }).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map(s => s.str).join(' ') + '\n';
+        }
+        entry.text = text.trim();
+        entry.status = 'ok';
+      } catch {
+        entry.status = 'err';
+        entry.text = '';
+      }
+      renderFileList();
+      checkReady();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function renderFileList() {
+    const list = document.getElementById('file-list');
+    if (curriculos.length === 0) { list.innerHTML = ''; return; }
+    list.innerHTML = curriculos.map((c, i) => `
+      <div class="file-item">
+        <span class="fi-icon">📄</span>
+        <span class="fi-name">${c.name}</span>
+        <span class="fi-size">${(c.size / 1024).toFixed(0)} KB</span>
+        <span class="fi-status ${c.status}">${c.status === 'ok' ? 'Lido' : c.status === 'reading' ? 'Lendo...' : 'Erro'}</span>
+        <button class="fi-remove" onclick="removeFile(${i})">×</button>
+      </div>
+    `).join('');
+  }
+
+  function removeFile(i) {
+    curriculos.splice(i, 1);
+    renderFileList();
+    checkReady();
+  }
+
+  function checkReady() {
+    const ok = curriculos.length > 0 && curriculos.every(c => c.status === 'ok') &&
+      document.getElementById('cargo').value.trim() &&
+      document.getElementById('descricao').value.trim();
+    document.getElementById('btn-analisar').disabled = !ok;
+  }
+
+  document.getElementById('cargo').addEventListener('input', checkReady);
+  document.getElementById('descricao').addEventListener('input', checkReady);
+
+  // ===== ANÁLISE =====
+  async function analisar() {
+    const cargo = document.getElementById('cargo').value.trim();
+    const area = document.getElementById('area').value.trim();
+    const locVaga = document.getElementById('localizacao').value.trim();
+    const regime = document.getElementById('regime').value;
+    const salFaixa = document.getElementById('salario').value.trim();
+    const descricao = document.getElementById('descricao').value.trim();
+    const pesos = {
+      experiencia: document.getElementById('peso-exp').value,
+      formacao: document.getElementById('peso-form').value,
+      tecnico: document.getElementById('peso-tec').value,
+      localizacao: document.getElementById('peso-loc').value,
+      salario: document.getElementById('peso-sal').value,
+    };
+
+    document.getElementById('form-area').style.display = 'none';
+    document.getElementById('loading-box').classList.add('show');
+
+    const steps = ['Lendo PDFs...', 'Enviando para análise...', 'Avaliando candidatos...', 'Montando ranking...'];
+    let si = 0;
+    const stepEl = document.getElementById('loading-step');
+    const stepInterval = setInterval(() => { if (si < steps.length - 1) stepEl.textContent = steps[++si]; }, 3000);
+
+    const curriculosTexto = curriculos.map((c, i) =>
+      `=== CURRÍCULO ${i + 1}: ${c.name} ===\n${c.text}`
+    ).join('\n\n');
+
+    const prompt = `Você é um especialista em recrutamento e seleção. Analise os currículos abaixo para a vaga descrita e retorne um ranking detalhado em JSON.
+
+VAGA:
+- Cargo: ${cargo}
+- Área: ${area || 'Não informado'}
+- Localização: ${locVaga || 'Não informado'}
+- Regime: ${regime}
+- Faixa salarial: ${salFaixa || 'Não informado'}
+- Descrição: ${descricao}
+
+PESOS DOS CRITÉRIOS (1 a 5):
+- Experiência profissional: ${pesos.experiencia}
+- Formação acadêmica: ${pesos.formacao}
+- Habilidades técnicas: ${pesos.tecnico}
+- Localização / Distância: ${pesos.localizacao}
+- Pretensão salarial: ${pesos.salario}
+
+CURRÍCULOS:
+${curriculosTexto}
+
+Retorne SOMENTE um JSON válido (sem texto adicional, sem markdown), neste formato exato:
+{
+  "resumo_geral": "Texto curto com impressão geral sobre o pool de candidatos",
+  "candidatos": [
+    {
+      "arquivo": "nome-do-arquivo.pdf",
+      "nome": "Nome do candidato ou 'Não identificado'",
+      "cargo_atual": "Cargo/empresa atual ou mais recente",
+      "localizacao": "Cidade/Estado extraído do currículo",
+      "pretensao_salarial": "Valor ou 'Não informado'",
+      "score_total": 85,
+      "scores": {
+        "experiencia": 90,
+        "formacao": 80,
+        "tecnico": 85,
+        "localizacao": 70,
+        "salario": 80
+      },
+      "resumo": "2-3 frases resumindo o perfil do candidato e sua aderência à vaga",
+      "pontos_fortes": ["ponto 1", "ponto 2", "ponto 3"],
+      "pontos_fracos": ["ponto 1", "ponto 2"]
+    }
+  ]
+}
+
+Os candidatos devem estar ordenados do maior para o menor score_total. O score_total deve considerar os pesos fornecidos. Todos os scores são de 0 a 100.`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await resp.json();
+      clearInterval(stepInterval);
+      const text = data.content.map(b => b.text || '').join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      const result = JSON.parse(clean);
+      renderResultados(result, cargo, curriculos.length);
+    } catch (err) {
+      clearInterval(stepInterval);
+      document.getElementById('loading-box').classList.remove('show');
+      document.getElementById('form-area').style.display = 'block';
+      alert('Erro ao analisar. Tente novamente.');
+      console.error(err);
+    }
+  }
+
+  // ===== RENDERIZAÇÃO =====
+  function renderResultados(data, cargo, total) {
+    document.getElementById('loading-box').classList.remove('show');
+    document.getElementById('results-area').classList.add('show');
+    document.getElementById('results-meta').textContent =
+      `${total} currículo${total > 1 ? 's' : ''} analisado${total > 1 ? 's' : ''} · vaga: ${cargo}`;
+    document.getElementById('results-info').textContent = data.resumo_geral;
+
+    const container = document.getElementById('cards-container');
+    container.innerHTML = data.candidatos.map((c, i) => {
+      const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+      const rankLabel = i === 0 ? '1º' : i === 1 ? '2º' : i === 2 ? '3º' : `${i+1}º`;
+      const barW = c.score_total;
+      return `
+        <div class="candidate-card ${rankClass}" id="card-${i}">
+          <div class="cand-header" onclick="toggleCard(${i})">
+            <div class="rank-badge">${rankLabel}</div>
+            <div class="cand-info">
+              <div class="cand-name">${c.nome}</div>
+              <div class="cand-sub">${c.cargo_atual || ''} ${c.localizacao ? '· ' + c.localizacao : ''}</div>
+            </div>
+            <div class="score-wrap">
+              <div class="score-bar-wrap"><div class="score-bar" style="width:${barW}%"></div></div>
+              <span class="score-num">${c.score_total}</span>
+            </div>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="cand-body">
+            <p class="cand-summary">${c.resumo}</p>
+            <div class="scores-grid">
+              <div class="score-item"><div class="si-label">Experiência</div><div class="si-val">${c.scores.experiencia}</div></div>
+              <div class="score-item"><div class="si-label">Formação</div><div class="si-val">${c.scores.formacao}</div></div>
+              <div class="score-item"><div class="si-label">Técnico</div><div class="si-val">${c.scores.tecnico}</div></div>
+              <div class="score-item"><div class="si-label">Localização</div><div class="si-val">${c.scores.localizacao}</div></div>
+              <div class="score-item"><div class="si-label">Pretensão</div><div class="si-val">${c.scores.salario}</div></div>
+            </div>
+            <div class="pros-cons">
+              <div class="pros">
+                <div class="pc-title">Pontos fortes</div>
+                <ul class="pc-list">${(c.pontos_fortes || []).map(p => `<li>${p}</li>`).join('')}</ul>
+              </div>
+              <div class="cons">
+                <div class="pc-title">Pontos de atenção</div>
+                <ul class="pc-list">${(c.pontos_fracos || []).map(p => `<li>${p}</li>`).join('')}</ul>
+              </div>
+            </div>
+            ${c.pretensao_salarial && c.pretensao_salarial !== 'Não informado' ? `<div style="margin-top:12px;font-size:12px;color:var(--text-hint)">Pretensão salarial declarada: <strong style="color:var(--text)">${c.pretensao_salarial}</strong></div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function toggleCard(i) {
+    document.getElementById('card-' + i).classList.toggle('open');
+  }
+
+  function resetar() {
+    curriculos = [];
+    document.getElementById('results-area').classList.remove('show');
+    document.getElementById('form-area').style.display = 'block';
+    document.getElementById('file-list').innerHTML = '';
+    document.getElementById('cards-container').innerHTML = '';
+    document.getElementById('btn-analisar').disabled = true;
+    document.getElementById('file-input').value = '';
+  }
+</script>
+</body>
+</html>
