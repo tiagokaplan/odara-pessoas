@@ -7,16 +7,16 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F5F4F0;
+    --bg: #FDF6EC;
     --surface: #FFFFFF;
-    --surface2: #F0EFE9;
-    --border: #DDDBD3;
+    --surface2: #F2EDE6;
+    --border: #E8E0D5;
     --border-strong: #B8B5AB;
-    --text: #1A1917;
-    --text-muted: #6B6860;
-    --text-hint: #9E9C96;
-    --accent: #1A1917;
-    --accent-fg: #F5F4F0;
+    --text: #1E1B18;
+    --text-muted: #7A6E65;
+    --text-hint: #B0A89E;
+    --accent: #F03040;
+    --accent-fg: #FFFDF8;
     --green: #1E6B45;
     --green-bg: #E8F5EE;
     --blue: #1A4A8A;
@@ -44,22 +44,18 @@
   header {
     background: var(--accent);
     color: var(--accent-fg);
-    padding: 18px 32px;
+    padding: 0 40px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
-  header h1 {
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-  header span {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    opacity: 0.5;
-    letter-spacing: 0.05em;
-  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn { font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.02em; transition: color 0.15s; }
+  .back-btn:hover { color: #F5A623; }
+  .header-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.25); }
+  .header-title { font-size: 14px; font-weight: 500; }
+  .header-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.4; letter-spacing: 0.05em; }
 
   /* TABS */
   .tabs {
@@ -85,7 +81,7 @@
   }
   .tab-btn.active {
     color: var(--text);
-    border-bottom-color: var(--text);
+    border-bottom-color: #F03040;
   }
   .tab-btn:hover:not(.active) { color: var(--text); }
 
@@ -174,8 +170,8 @@
     transition: background 0.15s, color 0.15s;
   }
   .toggle-opt.active {
-    background: var(--accent);
-    color: var(--accent-fg);
+    background: #F03040;
+    color: #FFFDF8;
   }
 
   /* RESULTADO */
@@ -366,8 +362,12 @@
 <body>
 
 <header>
-  <h1>Calculadora de Custo de Funcionário</h1>
-  <span>RH · v1.0</span>
+  <div class="header-left">
+    <a class="back-btn" href="index.html">← voltar</a>
+    <div class="header-sep"></div>
+    <span class="header-title">Calculadora de Custo de Funcionário</span>
+  </div>
+  <span class="header-tag">RH · v1.0</span>
 </header>
 
 <div class="tabs">
@@ -387,9 +387,10 @@
       <!-- TIPO -->
       <div class="card">
         <div class="card-title">Tipo de contratação</div>
-        <div class="toggle-wrap" style="max-width:300px">
+        <div class="toggle-wrap" style="max-width:420px">
           <button class="toggle-opt active" id="btn-clt" onclick="setTipo('clt')">CLT</button>
           <button class="toggle-opt" id="btn-pj" onclick="setTipo('pj')">PJ</button>
+          <button class="toggle-opt" id="btn-est" onclick="setTipo('est')">Estagiário</button>
         </div>
       </div>
 
@@ -466,6 +467,57 @@
           <div class="field">
             <label>Honorário contábil (R$/mês)</label>
             <input type="number" id="contabil" value="200" min="0" step="50" oninput="calc()">
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS ESTAGIÁRIO -->
+      <div class="card" id="card-est" style="display:none">
+        <div class="card-title">Custos Estagiário (Lei 11.788/2008)</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>Jornada diária (horas)</label>
+            <input type="number" id="jornada-est" value="6" min="4" max="6" step="0.5" oninput="calc()">
+            <span class="hint">Máx. 6h/dia (ensino superior) ou 4h (médio)</span>
+          </div>
+          <div class="field">
+            <label>Seguro de acidentes pessoais (R$/mês)</label>
+            <input type="number" id="seguro-est" value="30" min="0" step="5" oninput="calc()">
+            <span class="hint">Obrigatório por lei. Valor varia por apólice.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS ESTAGIÁRIO -->
+      <div class="card" id="card-est" style="display:none">
+        <div class="card-title">Custos Estagiário (Lei 11.788/2008)</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>Jornada diária (horas)</label>
+            <input type="number" id="jornada-est" value="6" min="4" max="6" step="0.5" oninput="calc()">
+            <span class="hint">Máx. 6h/dia (ensino superior) ou 4h (médio)</span>
+          </div>
+          <div class="field">
+            <label>Seguro de acidentes pessoais (R$/mês)</label>
+            <input type="number" id="seguro-est" value="30" min="0" step="5" oninput="calc()">
+            <span class="hint">Obrigatório por lei. Valor varia por apólice.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS ESTAGIÁRIO -->
+      <div class="card" id="card-est" style="display:none">
+        <div class="card-title">Custos Estagiário (Lei 11.788/2008)</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>Jornada diária (horas)</label>
+            <input type="number" id="jornada-est" value="6" min="4" max="6" step="0.5" oninput="calc()">
+            <span class="hint">Máx. 6h/dia (ensino superior) ou 4h (médio)</span>
+          </div>
+          <div class="field">
+            <label>Seguro de acidentes pessoais (R$/mês)</label>
+            <input type="number" id="seguro-est" value="30" min="0" step="5" oninput="calc()">
+            <span class="hint">Obrigatório por lei. Valor varia por apólice.</span>
           </div>
         </div>
       </div>
@@ -619,9 +671,15 @@ function setTipo(v) {
   tipo = v;
   document.getElementById('btn-clt').classList.toggle('active', v === 'clt');
   document.getElementById('btn-pj').classList.toggle('active', v === 'pj');
+  document.getElementById('btn-est').classList.toggle('active', v === 'est');
   document.getElementById('card-clt').style.display = v === 'clt' ? '' : 'none';
   document.getElementById('card-pj').style.display = v === 'pj' ? '' : 'none';
-  document.getElementById('lbl-salario').textContent = v === 'clt' ? 'Salário bruto (R$)' : 'Valor da NF mensal (R$)';
+  document.getElementById('card-est').style.display = v === 'est' ? '' : 'none';
+  const labels = { clt: 'Bolsa mensal (R$)', pj: 'Valor da NF mensal (R$)', est: 'Bolsa estágio (R$)' };
+  document.getElementById('lbl-salario').textContent = labels[v] || 'Salário bruto (R$)';
+  // Estagiário não tem turno noturno — forçar diurno
+  if (v === 'est') { setTurno('dia'); document.getElementById('btn-noite').disabled = true; }
+  else { document.getElementById('btn-noite').disabled = false; }
   calc();
 }
 
@@ -770,7 +828,7 @@ function renderLines(lines) {
     if (l.type === 'group') return `<div class="r-group">${l.label}</div>`;
     if (l.type === 'subtotal') return `<div class="r-subtotal"><span>${l.label}</span><span class="val">${fmt(l.val)}</span></div>`;
     if (l.type === 'total') return `<div class="r-total"><span>${l.label}</span><span class="val">${fmt(l.val)}</span></div>`;
-    return `<div class="r-line"><span>${l.label}</span><span class="val">${fmt(l.val)}</span></div>`;
+    return `<div class="r-line"><span>${l.label}</span><span class="val">${l.obs ? '<span style="font-size:11px;color:var(--text-hint);font-style:italic">' + l.obs + '</span>' : fmt(l.val)}</span></div>`;
   }).join('');
 }
 
@@ -887,6 +945,137 @@ function calc() {
     ];
   }
 
+  if (tipo === 'est') {
+    const bolsa = salBase;
+    const jornadaH = parseFloat(document.getElementById('jornada-est').value) || 6;
+    const seguro = parseFloat(document.getElementById('seguro-est').value) || 30;
+    const vrMes = vrDia * diasUteis;
+    const vtMes = vtDia * diasUteis;
+
+    // Recesso proporcional (equivalente a férias): 1/12 da bolsa + 1/3
+    const recessoProv = bolsa / 12;
+    const tercoRecesso = (bolsa / 12) * (1/3);
+
+    const subBolsa = bolsa;
+    const subBen = vrMes + vtMes + ps;
+    const subProv = recessoProv + tercoRecesso;
+    const subEnc = seguro;
+    total = subBolsa + subBen + subProv + subEnc;
+
+    lines = [{type:'group', label:'Remuneração'}];
+    lines.push({label: 'Bolsa estágio', val: bolsa});
+    lines.push({type:'subtotal', label:'Subtotal bolsa', val: subBolsa});
+
+    lines.push({type:'group', label:'Benefícios'});
+    lines.push({label: `Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label: `Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtMes});
+    lines.push({label: 'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+
+    lines.push({type:'group', label:'Provisões (recesso remunerado)'});
+    lines.push({label: 'Recesso proporcional (1/12)', val: recessoProv});
+    lines.push({label: '1/3 constitucional recesso', val: tercoRecesso});
+    lines.push({type:'subtotal', label:'Subtotal provisões', val: subProv});
+
+    lines.push({type:'group', label:'Encargos obrigatórios'});
+    lines.push({label: 'Seguro contra acidentes pessoais', val: seguro});
+    lines.push({label: 'INSS patronal', val: 0, obs: 'Isento' });
+    lines.push({label: 'FGTS', val: 0, obs: 'Isento' });
+    lines.push({label: '13º salário', val: 0, obs: 'Não se aplica' });
+    lines.push({type:'subtotal', label:'Subtotal encargos', val: subEnc});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+
+    const jornadaMensal = jornadaH * diasUteis;
+    const custoHora = total / jornadaMensal;
+    metrics = [
+      {label: 'Custo / hora', val: fmt(custoHora)},
+      {label: `Jornada (${jornadaH}h/dia)`, val: jornadaMensal.toFixed(0) + 'h/mês'},
+      {label: 'Sem FGTS e INSS', val: '—'},
+    ];
+  }
+
+  if (tipo === 'est') {
+    const bolsa = salBase;
+    const jornadaH = parseFloat(document.getElementById('jornada-est').value) || 6;
+    const seguro = parseFloat(document.getElementById('seguro-est').value) || 30;
+    const vrMes = vrDia * diasUteis;
+    const vtMes = vtDia * diasUteis;
+    const recessoProv = bolsa / 12;
+    const tercoRecesso = (bolsa / 12) * (1/3);
+    const subBolsa = bolsa;
+    const subBen = vrMes + vtMes + ps;
+    const subProv = recessoProv + tercoRecesso;
+    const subEnc = seguro;
+    total = subBolsa + subBen + subProv + subEnc;
+    lines = [{type:'group', label:'Remuneração'}];
+    lines.push({label: 'Bolsa estágio', val: bolsa});
+    lines.push({type:'subtotal', label:'Subtotal bolsa', val: subBolsa});
+    lines.push({type:'group', label:'Benefícios'});
+    lines.push({label: `Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label: `Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtMes});
+    lines.push({label: 'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+    lines.push({type:'group', label:'Provisões (recesso remunerado)'});
+    lines.push({label: 'Recesso proporcional (1/12)', val: recessoProv});
+    lines.push({label: '1/3 constitucional recesso', val: tercoRecesso});
+    lines.push({type:'subtotal', label:'Subtotal provisões', val: subProv});
+    lines.push({type:'group', label:'Encargos obrigatórios'});
+    lines.push({label: 'Seguro contra acidentes pessoais', val: seguro});
+    lines.push({label: 'INSS patronal', val: 0, obs: 'Isento'});
+    lines.push({label: 'FGTS', val: 0, obs: 'Isento'});
+    lines.push({label: '13º salário', val: 0, obs: 'Não se aplica'});
+    lines.push({type:'subtotal', label:'Subtotal encargos', val: subEnc});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+    const jornadaMensal = jornadaH * diasUteis;
+    const custoHora = total / jornadaMensal;
+    metrics = [
+      {label: 'Custo / hora', val: fmt(custoHora)},
+      {label: `Jornada (${jornadaH}h/dia)`, val: jornadaMensal.toFixed(0) + 'h/mês'},
+      {label: 'Sem FGTS e INSS', val: '—'},
+    ];
+  }
+
+  if (tipo === 'est') {
+    const bolsa = salBase;
+    const jornadaH = parseFloat(document.getElementById('jornada-est').value) || 6;
+    const seguro = parseFloat(document.getElementById('seguro-est').value) || 30;
+    const vrMes = vrDia * diasUteis;
+    const vtMes = vtDia * diasUteis;
+    const recessoProv = bolsa / 12;
+    const tercoRecesso = (bolsa / 12) * (1/3);
+    const subBolsa = bolsa;
+    const subBen = vrMes + vtMes + ps;
+    const subProv = recessoProv + tercoRecesso;
+    const subEnc = seguro;
+    total = subBolsa + subBen + subProv + subEnc;
+    lines = [{type:'group', label:'Remuneração'}];
+    lines.push({label: 'Bolsa estágio', val: bolsa});
+    lines.push({type:'subtotal', label:'Subtotal bolsa', val: subBolsa});
+    lines.push({type:'group', label:'Benefícios'});
+    lines.push({label: `Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label: `Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtMes});
+    lines.push({label: 'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+    lines.push({type:'group', label:'Provisões (recesso remunerado)'});
+    lines.push({label: 'Recesso proporcional (1/12)', val: recessoProv});
+    lines.push({label: '1/3 constitucional recesso', val: tercoRecesso});
+    lines.push({type:'subtotal', label:'Subtotal provisões', val: subProv});
+    lines.push({type:'group', label:'Encargos obrigatórios'});
+    lines.push({label: 'Seguro contra acidentes pessoais', val: seguro});
+    lines.push({label: 'INSS patronal', val: 0, obs: 'Isento'});
+    lines.push({label: 'FGTS', val: 0, obs: 'Isento'});
+    lines.push({label: '13º salário', val: 0, obs: 'Não se aplica'});
+    lines.push({type:'subtotal', label:'Subtotal encargos', val: subEnc});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+    const jornadaMensal = jornadaH * diasUteis;
+    const custoHora = total / jornadaMensal;
+    metrics = [
+      {label: 'Custo / hora', val: fmt(custoHora)},
+      {label: `Jornada (${jornadaH}h/dia)`, val: jornadaMensal.toFixed(0) + 'h/mês'},
+      {label: 'Sem FGTS e INSS', val: '—'},
+    ];
+  }
+
   const turnoTag = turno === 'noite'
     ? `<span class="tag tag-noite">Noturno ${cfg.adicionalNot}%</span>`
     : `<span class="tag tag-noite-off">Diurno</span>`;
@@ -898,7 +1087,7 @@ function calc() {
         <div class="total">${fmt(total)}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-        <span class="badge">${tipo.toUpperCase()}</span>
+        <span class="badge">${tipo === 'est' ? 'ESTAGIÁRIO' : tipo.toUpperCase()}</span>
         ${turnoTag}
       </div>
     </div>
