@@ -3,245 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ferramentas RH</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Ferramentas RH · Odara</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F5F4F0;
-    --surface: #FFFFFF;
-    --surface2: #EEECE6;
-    --border: #DDDBD3;
-    --border-strong: #B8B5AB;
-    --text: #1A1917;
-    --text-muted: #6B6860;
-    --text-hint: #9E9C96;
-    --accent: #1A1917;
-    --accent-fg: #F5F4F0;
-    --radius: 6px;
-    --radius-lg: 12px;
+    --red:#F03040;--yellow:#F5A623;--black:#1E1B18;--white:#FFFDF8;
+    --cream:#FDF6EC;--gray:#F2EDE6;--border:#E8E0D5;
+    --text-muted:#7A6E65;--text-hint:#B0A89E;
+    --radius:8px;--radius-lg:16px;--radius-xl:24px;
   }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--black);min-height:100vh;overflow-x:hidden;}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  header{background:var(--red);padding:16px 48px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+  header::after{content:'';position:absolute;right:-40px;top:-40px;width:160px;height:160px;background:rgba(245,166,35,0.22);border-radius:50%;}
+  .logo{display:flex;align-items:center;gap:12px;text-decoration:none;position:relative;z-index:1;}
+  .logo-sub{font-size:11px;font-weight:700;color:rgba(255,255,255,0.65);letter-spacing:0.08em;text-transform:uppercase;}
+  .header-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.4);position:relative;z-index:1;}
 
-  body {
-    font-family: 'IBM Plex Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+  .hero{background:var(--red);padding:40px 48px 64px;position:relative;overflow:hidden;}
+  .hero-content{position:relative;z-index:1;max-width:600px;}
+  .hero-eyebrow{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--yellow);margin-bottom:14px;}
+  .hero h1{font-size:44px;font-weight:900;line-height:1.05;color:var(--white);margin-bottom:16px;letter-spacing:-0.02em;}
+  .hero h1 .yl{color:var(--yellow);}
+  .hero p{font-size:16px;color:rgba(255,255,255,0.75);line-height:1.6;font-weight:600;max-width:440px;}
 
-  /* HEADER */
-  header {
-    background: var(--accent);
-    color: var(--accent-fg);
-    padding: 0 48px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .header-brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .header-logo {
-    width: 32px;
-    height: 32px;
-    border: 1.5px solid rgba(255,255,255,0.25);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--accent-fg);
-    letter-spacing: -0.03em;
-  }
-  .header-name {
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-  }
-  .header-tag {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    opacity: 0.4;
-    letter-spacing: 0.05em;
-  }
+  .wave{display:block;background:var(--red);line-height:0;}
+  .wave svg{display:block;width:100%;}
 
-  /* HERO */
-  .hero {
-    padding: 56px 48px 40px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .hero-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    color: var(--text-hint);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .hero h1 {
-    font-size: 32px;
-    font-weight: 300;
-    color: var(--text);
-    line-height: 1.2;
-    margin-bottom: 12px;
-    letter-spacing: -0.02em;
-  }
-  .hero h1 strong {
-    font-weight: 600;
-  }
-  .hero p {
-    font-size: 15px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    max-width: 520px;
-  }
+  .tools-section{max-width:1100px;margin:0 auto;padding:48px 48px 80px;}
+  .section-label{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-hint);margin-bottom:28px;}
+  .section-label::before{content:'';width:24px;height:3px;background:var(--yellow);border-radius:99px;}
 
-  /* DIVIDER */
-  .divider {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 48px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 40px;
-  }
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
 
-  /* GRID */
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 48px 80px;
-  }
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-hint);
-    margin-bottom: 20px;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 16px;
-  }
+  .tool-card{background:var(--white);border:2px solid var(--border);border-radius:var(--radius-xl);padding:28px;text-decoration:none;display:flex;flex-direction:column;gap:0;transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;position:relative;overflow:hidden;}
+  .tool-card:hover{border-color:var(--yellow);transform:translateY(-4px);box-shadow:0 12px 40px rgba(240,48,64,0.12);}
+  .tool-card::before{content:'';position:absolute;top:-30px;right:-30px;width:80px;height:80px;border-radius:50%;background:var(--cream);}
+  .tool-card:hover::before{background:#FEF5E4;}
 
-  /* TOOL CARD */
-  .tool-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    transition: border-color 0.15s, transform 0.15s;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-  }
-  .tool-card:hover {
-    border-color: var(--border-strong);
-    transform: translateY(-2px);
-  }
-  .tool-card::after {
-    content: '→';
-    position: absolute;
-    bottom: 24px;
-    right: 24px;
-    font-size: 16px;
-    color: var(--text-hint);
-    transition: color 0.15s, transform 0.15s;
-  }
-  .tool-card:hover::after {
-    color: var(--text);
-    transform: translateX(3px);
-  }
+  .tool-icon-wrap{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:24px;position:relative;z-index:1;}
+  .icon-yellow{background:#FEF3D7;}.icon-red{background:#FDEAEC;}.icon-warm{background:#FDF0E0;}
 
-  .tool-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-  }
-  .icon-green { background: #E8F5EE; }
-  .icon-blue  { background: #E8EFF8; }
-  .icon-amber { background: #FDF3DC; }
-  .icon-purple{ background: #EEEDFE; }
+  .tool-cat{font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-hint);margin-bottom:6px;}
+  .tool-name{font-size:19px;font-weight:900;color:var(--black);line-height:1.2;margin-bottom:10px;letter-spacing:-0.01em;}
+  .tool-desc{font-size:13px;color:var(--text-muted);line-height:1.6;font-weight:600;flex:1;margin-bottom:20px;}
 
-  .tool-category {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-hint);
-  }
-  .tool-name {
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--text);
-    line-height: 1.3;
-    margin-bottom: 2px;
-  }
-  .tool-desc {
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.55;
-    padding-right: 24px;
-  }
+  .tool-footer{display:flex;align-items:center;justify-content:space-between;border-top:1.5px solid var(--border);padding-top:14px;margin-top:auto;}
+  .tool-tags{display:flex;gap:6px;flex-wrap:wrap;}
+  .tag{font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--gray);color:var(--text-muted);letter-spacing:0.04em;}
+  .tag-ai{background:#FEF3D7;color:#A07010;}
+  .arrow-btn{width:32px;height:32px;border-radius:50%;background:var(--black);display:flex;align-items:center;justify-content:center;color:white;font-size:14px;flex-shrink:0;transition:background 0.2s,transform 0.2s;}
+  .tool-card:hover .arrow-btn{background:var(--red);transform:translateX(3px);}
 
-  .tool-tags {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 4px;
-  }
-  .tag {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 99px;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    background: var(--bg);
-  }
-  .tag-ai {
-    border-color: #C5D5EB;
-    color: #1A4A8A;
-    background: #E8EFF8;
-  }
+  footer{background:var(--black);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+  .footer-logo{display:flex;align-items:center;gap:6px;}
+  .footer-name{font-size:16px;font-weight:900;color:var(--white);letter-spacing:-0.01em;}
+  .footer-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+  .footer-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;text-transform:uppercase;}
+  .footer-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);}
 
-  /* FOOTER */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 20px 48px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  footer span {
-    font-size: 12px;
-    color: var(--text-hint);
-    font-family: 'IBM Plex Mono', monospace;
-  }
+  .header-brand{display:flex;align-items:center;gap:16px;position:relative;z-index:1;}
+  .header-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:0.01em;}
+  .header-sep{width:1px;height:16px;background:rgba(255,255,255,0.3);}
+  .header-sub{font-size:13px;color:rgba(255,255,255,0.6);font-weight:600;}
+  .footer-name{font-size:15px;font-weight:700;color:var(--white);letter-spacing:-0.01em;}
 
-  @media (max-width: 640px) {
-    header { padding: 0 20px; }
-    .hero { padding: 32px 20px 28px; }
-    .hero h1 { font-size: 24px; }
-    .divider { padding: 0 20px; }
-    .container { padding: 0 20px 60px; }
-    .grid { grid-template-columns: 1fr; }
-    footer { padding: 16px 20px; flex-direction: column; gap: 8px; text-align: center; }
+  @media(max-width:640px){
+    header{padding:14px 20px;}.hero{padding:32px 20px 48px;}.hero h1{font-size:30px;}
+    .tools-section{padding:32px 20px 60px;}.grid{grid-template-columns:1fr;}
+    footer{padding:24px 20px;flex-direction:column;align-items:flex-start;}.footer-right{align-items:flex-start;}
   }
 </style>
 </head>
@@ -249,66 +80,83 @@
 
 <header>
   <div class="header-brand">
-    <div class="header-logo">RH</div>
-    <span class="header-name">Ferramentas RH</span>
+    <span class="header-title">Odara Alfajores</span>
+    <div class="header-sep"></div>
+    <span class="header-sub">Ferramentas RH</span>
   </div>
-  <span class="header-tag">USO INTERNO</span>
+  <span class="header-badge">uso interno</span>
 </header>
 
 <div class="hero">
-  <div class="hero-label">Portal de ferramentas</div>
-  <h1>Tudo que o RH<br><strong>precisa em um lugar.</strong></h1>
-  <p>Ferramentas práticas para o dia a dia — cálculos, triagem e revisão, sem planilhas complicadas.</p>
+  <!-- Elementos decorativos da marca Odara -->
+  <svg style="position:absolute;right:-50px;top:-50px;width:220px;opacity:0.15;pointer-events:none" viewBox="0 0 220 220">
+    <circle cx="110" cy="110" r="110" fill="#F5A623"/>
+  </svg>
+  <!-- Asterisco/estrela da marca -->
+  <svg style="position:absolute;right:210px;top:14px;width:64px;opacity:0.22;pointer-events:none" viewBox="0 0 100 100">
+    <path d="M50 8C51 28 66 18 88 20 70 27 80 46 76 66 62 52 52 70 50 92 48 70 38 52 24 66 20 46 30 27 12 20 34 18 49 28 50 8Z" fill="#F5A623"/>
+  </svg>
+  <!-- Onda da marca -->
+  <svg style="position:absolute;right:50px;bottom:18px;width:130px;opacity:0.2;pointer-events:none" viewBox="0 0 200 70">
+    <path d="M10 55 C35 18 55 62 85 36 C115 10 135 55 165 32 C182 20 192 42 200 28" stroke="#F5A623" stroke-width="13" stroke-linecap="round" fill="none"/>
+  </svg>
+  <!-- Coração da marca -->
+  <svg style="position:absolute;right:330px;bottom:14px;width:44px;opacity:0.18;pointer-events:none" viewBox="0 0 100 88">
+    <path d="M50 78 C48 72 10 50 10 28 C10 14 22 6 35 11 C42 14 47 21 50 28 C53 21 58 14 65 11 C78 6 90 14 90 28 C90 50 52 72 50 78Z" fill="#F5A623"/>
+  </svg>
+  <!-- Coqueiro (pequeno) -->
+  <svg style="position:absolute;left:48%;bottom:0;width:36px;opacity:0.13;pointer-events:none" viewBox="0 0 80 130">
+    <path d="M38 120 C38 80 30 60 20 40 C14 28 8 22 10 16 C18 8 32 18 38 36 C44 18 58 8 66 16 C68 22 62 28 56 40 C46 60 42 80 42 120Z" fill="#F5A623"/>
+    <ellipse cx="38" cy="40" rx="28" ry="16" fill="#F5A623"/>
+  </svg>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Portal de ferramentas</div>
+    <h1>Tudo que o RH<br>precisa, <span class="yl">num lugar só.</span></h1>
+    <p>Ferramentas práticas para o dia a dia — cálculos, triagem e revisão, sem planilhas complicadas.</p>
+  </div>
 </div>
 
-<div class="divider"></div>
+<div class="wave">
+  <svg viewBox="0 0 1440 48" preserveAspectRatio="none" height="48">
+    <path d="M0,0 C240,48 480,48 720,24 C960,0 1200,48 1440,24 L1440,0 Z" fill="#F03040"/>
+  </svg>
+</div>
 
-<div class="container">
+<div class="tools-section">
   <div class="section-label">Ferramentas disponíveis</div>
   <div class="grid">
 
-    <!-- CALCULADORA DE CUSTO -->
     <a class="tool-card" href="calculadora-custo.html">
-      <div class="tool-icon icon-green">💰</div>
-      <div>
-        <div class="tool-category">Remuneração</div>
-        <div class="tool-name">Calculadora de custo de funcionário</div>
-      </div>
-      <div class="tool-desc">Calcula o custo real mensal para a empresa — CLT ou PJ — incluindo encargos patronais, benefícios e provisões rescisórias.</div>
-      <div class="tool-tags">
-        <span class="tag">CLT</span>
-        <span class="tag">PJ</span>
-        <span class="tag">Encargos</span>
-        <span class="tag">Provisões</span>
+      <div class="tool-icon-wrap icon-yellow">💰</div>
+      <div class="tool-cat">Remuneração</div>
+      <div class="tool-name">Calculadora de custo de funcionário</div>
+      <div class="tool-desc">Calcula o custo real mensal para a empresa — CLT, PJ ou Estagiário — com encargos, benefícios e provisões rescisórias.</div>
+      <div class="tool-footer">
+        <div class="tool-tags"><span class="tag">CLT</span><span class="tag">PJ</span><span class="tag">Estagiário</span></div>
+        <div class="arrow-btn">→</div>
       </div>
     </a>
 
-    <!-- TRIAGEM DE CURRÍCULOS -->
     <a class="tool-card" href="triagem-curriculos.html">
-      <div class="tool-icon icon-blue">📋</div>
-      <div>
-        <div class="tool-category">Recrutamento</div>
-        <div class="tool-name">Triagem de currículos para vaga</div>
-      </div>
-      <div class="tool-desc">Cole a descrição da vaga e os currículos dos candidatos. A ferramenta analisa o perfil de cada um e indica os mais aderentes.</div>
-      <div class="tool-tags">
-        <span class="tag">Recrutamento</span>
-        <span class="tag tag-ai">✦ IA</span>
+      <div class="tool-icon-wrap icon-red">📋</div>
+      <div class="tool-cat">Recrutamento</div>
+      <div class="tool-name">Triagem de currículos para vaga</div>
+      <div class="tool-desc">Faça upload dos PDFs dos candidatos, descreva a vaga e receba um ranking detalhado com pontos fortes e de atenção.</div>
+      <div class="tool-footer">
+        <div class="tool-tags"><span class="tag">Recrutamento</span><span class="tag tag-ai">✦ IA</span></div>
+        <div class="arrow-btn">→</div>
       </div>
     </a>
 
-    <!-- REVISOR DE FOLHA -->
     <a class="tool-card" href="revisor-folha.html">
-      <div class="tool-icon icon-amber">🧾</div>
-      <div>
-        <div class="tool-category">Folha de pagamento</div>
-        <div class="tool-name">Revisor de folha de pagamento</div>
-      </div>
-      <div class="tool-desc">Revisa lançamentos da folha, aponta inconsistências, valores fora do padrão e itens que merecem atenção antes do fechamento.</div>
-      <div class="tool-tags">
-        <span class="tag">Folha</span>
-        <span class="tag">Revisão</span>
-        <span class="tag tag-ai">✦ IA</span>
+      <div class="tool-icon-wrap icon-warm">🧾</div>
+      <div class="tool-cat">Folha de pagamento</div>
+      <div class="tool-name">Revisor de folha de pagamento</div>
+      <div class="tool-desc">Identifica inconsistências, valores fora do padrão e itens que precisam de atenção antes do fechamento da folha.</div>
+      <div class="tool-footer">
+        <div class="tool-tags"><span class="tag">Folha</span><span class="tag">Revisão</span><span class="tag tag-ai">✦ IA</span></div>
+        <div class="arrow-btn">→</div>
       </div>
     </a>
 
@@ -316,15 +164,18 @@
 </div>
 
 <footer>
-  <span>ferramentas-rh · uso interno</span>
-  <span id="footer-date"></span>
+  <div class="footer-logo">
+    <span class="footer-name">Odara Alfajores</span>
+  </div>
+  <div class="footer-right">
+    <span class="footer-label">ferramentas rh · uso interno</span>
+    <span class="footer-date" id="footer-date"></span>
+  </div>
 </footer>
 
 <script>
-  const d = new Date();
   document.getElementById('footer-date').textContent =
-    d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 </script>
-
 </body>
 </html>

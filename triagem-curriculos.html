@@ -8,16 +8,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
-    --bg: #F5F4F0;
+    --bg: #FDF6EC;
     --surface: #FFFFFF;
-    --surface2: #F0EFE9;
-    --border: #DDDBD3;
+    --surface2: #F2EDE6;
+    --border: #E8E0D5;
     --border-strong: #B8B5AB;
-    --text: #1A1917;
-    --text-muted: #6B6860;
-    --text-hint: #9E9C96;
-    --accent: #1A1917;
-    --accent-fg: #F5F4F0;
+    --text: #1E1B18;
+    --text-muted: #7A6E65;
+    --text-hint: #B0A89E;
+    --accent: #F03040;
+    --accent-fg: #FFFDF8;
     --blue: #1A4A8A;
     --blue-bg: #E8EFF8;
     --blue-border: #C5D5EB;
@@ -27,9 +27,9 @@
     --amber: #7A4A00;
     --amber-bg: #FDF3DC;
     --amber-border: #E8D4A0;
-    --red: #8A1A1A;
-    --red-bg: #F8E8E8;
-    --red-border: #E8B8B8;
+    --danger: #8A1A1A;
+    --danger-bg: #F8E8E8;
+    --danger-border: #E8B8B8;
     --radius: 6px;
     --radius-lg: 10px;
   }
@@ -40,8 +40,8 @@
   /* HEADER */
   header { background: var(--accent); color: var(--accent-fg); padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
   .header-left { display: flex; align-items: center; gap: 16px; }
-  .back-btn { font-size: 13px; color: rgba(255,255,255,0.5); text-decoration: none; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.02em; transition: color 0.15s; }
-  .back-btn:hover { color: rgba(255,255,255,0.9); }
+  .back-btn { font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.02em; transition: color 0.15s; }
+  .back-btn:hover { color: #F5A623; }
   .header-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
   .header-title { font-size: 14px; font-weight: 500; }
   .header-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.35; letter-spacing: 0.05em; }
@@ -94,9 +94,9 @@
   .file-item .fi-status { font-size: 11px; padding: 2px 8px; border-radius: 99px; flex-shrink: 0; }
   .fi-status.ok { background: var(--green-bg); color: var(--green); }
   .fi-status.reading { background: var(--amber-bg); color: var(--amber); }
-  .fi-status.err { background: var(--red-bg); color: var(--red); }
+  .fi-status.err { background: var(--danger-bg); color: var(--danger); }
   .file-item .fi-remove { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 16px; line-height: 1; padding: 0 2px; transition: color 0.15s; flex-shrink: 0; }
-  .file-item .fi-remove:hover { color: var(--red); }
+  .file-item .fi-remove:hover { color: var(--danger); }
 
   /* CRITERIA */
   .criteria-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 4px; }
@@ -107,7 +107,7 @@
 
   /* BUTTON */
   .btn-primary {
-    width: 100%; padding: 13px; background: var(--accent); color: var(--accent-fg);
+    width: 100%; padding: 13px; background: #F5A623; color: #1E1B18;
     border: none; border-radius: var(--radius); font-size: 15px; font-weight: 500;
     font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; transition: opacity 0.15s;
     letter-spacing: 0.01em; margin-top: 8px;
@@ -173,13 +173,13 @@
   .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .pros, .cons { border-radius: var(--radius); padding: 12px 14px; }
   .pros { background: var(--green-bg); }
-  .cons { background: var(--red-bg); }
+  .cons { background: var(--danger-bg); }
   .pros .pc-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--green); margin-bottom: 8px; }
-  .cons .pc-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+  .cons .pc-title { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--danger); margin-bottom: 8px; }
   .pc-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
   .pc-list li { font-size: 12px; line-height: 1.4; display: flex; gap: 6px; }
   .pros .pc-list li { color: var(--green); }
-  .cons .pc-list li { color: var(--red); }
+  .cons .pc-list li { color: var(--danger); }
   .pc-list li::before { flex-shrink: 0; font-size: 10px; margin-top: 2px; }
   .pros .pc-list li::before { content: '✓'; }
   .cons .pc-list li::before { content: '✗'; }
@@ -445,7 +445,7 @@ PESOS DOS CRITÉRIOS (1 a 5):
 - Formação acadêmica: ${pesos.formacao}
 - Habilidades técnicas: ${pesos.tecnico}
 - Localização / Distância: ${pesos.localizacao}
-- Pretensão salarial: ${pesos.salario}
+- Pretensão salarial: ${pesos.salario} (IMPORTANTE: se o candidato não informou pretensão salarial, atribua score neutro 70 — não penalize pela ausência)
 
 CURRÍCULOS:
 ${curriculosTexto}

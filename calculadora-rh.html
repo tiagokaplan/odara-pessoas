@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Custo de Funcionário — RH</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FDF6EC;
+    --surface: #FFFFFF;
+    --surface2: #F2EDE6;
+    --border: #E8E0D5;
+    --border-strong: #B8B5AB;
+    --text: #1E1B18;
+    --text-muted: #7A6E65;
+    --text-hint: #B0A89E;
+    --accent: #F03040;
+    --accent-fg: #FFFDF8;
+    --green: #1E6B45;
+    --green-bg: #E8F5EE;
+    --blue: #1A4A8A;
+    --blue-bg: #E8EFF8;
+    --amber: #7A4A00;
+    --amber-bg: #FDF3DC;
+    --red: #8A1A1A;
+    --red-bg: #F8E8E8;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--accent);
+    color: var(--accent-fg);
+    padding: 0 40px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn { font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.02em; transition: color 0.15s; }
+  .back-btn:hover { color: #F5A623; }
+  .header-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.25); }
+  .header-title { font-size: 14px; font-weight: 500; }
+  .header-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.4; letter-spacing: 0.05em; }
+
+  /* TABS */
+  .tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+  }
+  .tab-btn {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn.active {
+    color: var(--text);
+    border-bottom-color: #F03040;
+  }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 32px;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* GRID */
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .cols-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* FORM FIELDS */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .field input, .field select {
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--text);
+  }
+  .field .hint {
+    font-size: 11px;
+    color: var(--text-hint);
+    line-height: 1.4;
+  }
+
+  /* TOGGLE */
+  .toggle-wrap { display: flex; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .toggle-opt {
+    flex: 1;
+    padding: 8px 10px;
+    text-align: center;
+    font-size: 13px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .toggle-opt.active {
+    background: #F03040;
+    color: #FFFDF8;
+  }
+
+  /* RESULTADO */
+  .result-surface {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .result-hero {
+    background: var(--accent);
+    color: var(--accent-fg);
+    padding: 22px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .result-hero .label {
+    font-size: 12px;
+    opacity: 0.6;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .result-hero .total {
+    font-size: 32px;
+    font-weight: 300;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: -0.02em;
+  }
+  .result-hero .badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.3);
+    opacity: 0.8;
+  }
+
+  .result-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .metric-box {
+    padding: 14px 18px;
+    border-right: 1px solid var(--border);
+  }
+  .metric-box:last-child { border-right: none; }
+  .metric-box .m-label { font-size: 11px; color: var(--text-hint); margin-bottom: 3px; }
+  .metric-box .m-val { font-size: 17px; font-weight: 500; font-family: 'IBM Plex Mono', monospace; color: var(--text); }
+
+  .result-lines { padding: 8px 0; }
+  .r-group {
+    padding: 10px 20px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-top: 4px;
+  }
+  .r-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 20px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-radius: 4px;
+    margin: 0 8px;
+  }
+  .r-line:hover { background: var(--surface2); }
+  .r-line .val { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--text); font-weight: 500; }
+  .r-subtotal {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    border-top: 1px solid var(--border);
+    margin: 4px 0;
+  }
+  .r-subtotal .val { font-family: 'IBM Plex Mono', monospace; }
+  .r-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface2);
+    border-top: 1px solid var(--border-strong);
+    margin-top: 8px;
+  }
+  .r-total .val { font-family: 'IBM Plex Mono', monospace; }
+
+  /* CONFIGURAÇÕES */
+  .config-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 28px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .config-section-title .ico {
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 11px;
+  }
+  .config-section-title:first-child { margin-top: 0; }
+
+  .info-box {
+    background: var(--blue-bg);
+    border: 1px solid #C5D5EB;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--blue);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .info-box strong { font-weight: 600; }
+
+  .turno-preview {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .turno-preview strong { color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+
+  .btn-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { border-color: var(--text); color: var(--text); }
+
+  .tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .tag-noite { background: var(--amber-bg); color: var(--amber); }
+  .tag-noite-off { background: var(--surface2); color: var(--text-hint); }
+
+  @media (max-width: 700px) {
+    .container { padding: 16px; }
+    .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr 1fr; }
+    .result-metrics { grid-template-columns: 1fr 1fr; }
+    .result-metrics .metric-box:nth-child(3) { border-right: none; border-top: 1px solid var(--border); grid-column: span 2; }
+    header { padding: 14px 16px; }
+    .tabs { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a class="back-btn" href="index.html">← voltar</a>
+    <div class="header-sep"></div>
+    <span class="header-title">Calculadora de Custo de Funcionário</span>
+  </div>
+  <span class="header-tag">RH · v1.0</span>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('calc')">Calculadora</button>
+  <button class="tab-btn" onclick="showTab('config')">Configurações de percentuais</button>
+</div>
+
+<!-- ==================== ABA CALCULADORA ==================== -->
+<div id="tab-calc" class="tab-panel active">
+<div class="container">
+
+  <div style="display:grid; grid-template-columns: 1fr 400px; gap: 24px; align-items: start;">
+
+    <!-- COLUNA ESQUERDA: INPUTS -->
+    <div>
+
+      <!-- TIPO -->
+      <div class="card">
+        <div class="card-title">Tipo de contratação</div>
+        <div class="toggle-wrap" style="max-width:420px">
+          <button class="toggle-opt active" id="btn-clt" onclick="setTipo('clt')">CLT</button>
+          <button class="toggle-opt" id="btn-pj" onclick="setTipo('pj')">PJ</button>
+          <button class="toggle-opt" id="btn-est" onclick="setTipo('est')">Estagiário</button>
+        </div>
+      </div>
+
+      <!-- SALÁRIO -->
+      <div class="card">
+        <div class="card-title">Remuneração</div>
+        <div class="cols-2">
+          <div class="field">
+            <label id="lbl-salario">Salário bruto (R$)</label>
+            <input type="number" id="salario" value="5000" min="0" step="100" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>Dias úteis no mês</label>
+            <input type="number" id="dias-uteis" value="22" min="1" max="31" oninput="calc()">
+          </div>
+        </div>
+      </div>
+
+      <!-- TURNO -->
+      <div class="card">
+        <div class="card-title">Turno</div>
+        <div class="toggle-wrap" style="max-width:300px; margin-bottom:12px">
+          <button class="toggle-opt active" id="btn-dia" onclick="setTurno('dia')">Diurno</button>
+          <button class="toggle-opt" id="btn-noite" onclick="setTurno('noite')">Noturno</button>
+        </div>
+        <div id="turno-info" style="display:none" class="turno-preview" id="turno-preview"></div>
+      </div>
+
+      <!-- BENEFÍCIOS -->
+      <div class="card">
+        <div class="card-title">Benefícios</div>
+        <div class="cols-3">
+          <div class="field">
+            <label>Vale Refeição (R$/dia)</label>
+            <input type="number" id="vr" value="35" min="0" step="1" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>Vale Transporte (R$/dia)</label>
+            <input type="number" id="vt" value="15" min="0" step="1" oninput="calc()">
+          </div>
+          <div class="field">
+            <label>Plano de Saúde (R$/mês)</label>
+            <input type="number" id="ps" value="300" min="0" step="50" oninput="calc()">
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS CLT -->
+      <div class="card" id="card-clt">
+        <div class="card-title">Encargos patronais (CLT)</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>RAT × FAP (%)</label>
+            <input type="number" id="rat-calc" value="1.50" min="0.1" max="6" step="0.01" oninput="syncFromCalc('rat'); calc()">
+            <span class="hint">Risco de acidente de trabalho. Padrão: 1–3%</span>
+          </div>
+          <div class="field">
+            <label>Sistema S / Terceiros (%)</label>
+            <input type="number" id="sist-s-calc" value="5.80" min="0" max="10" step="0.01" oninput="syncFromCalc('sist-s'); calc()">
+            <span class="hint">Varia conforme CNAE. Padrão: ~5.8%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS PJ -->
+      <div class="card" id="card-pj" style="display:none">
+        <div class="card-title">Custos PJ</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>Impostos sobre NF (%)</label>
+            <input type="number" id="imp-pj" value="6.00" min="0" max="30" step="0.01" oninput="calc()">
+            <span class="hint">Simples Nacional, Lucro Presumido etc.</span>
+          </div>
+          <div class="field">
+            <label>Honorário contábil (R$/mês)</label>
+            <input type="number" id="contabil" value="200" min="0" step="50" oninput="calc()">
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS ESTAGIÁRIO -->
+      <div class="card" id="card-est" style="display:none">
+        <div class="card-title">Custos Estagiário (Lei 11.788/2008)</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>Jornada diária (horas)</label>
+            <input type="number" id="jornada-est" value="6" min="4" max="6" step="0.5" oninput="calc()">
+            <span class="hint">Máx. 6h/dia (ensino superior) ou 4h (médio)</span>
+          </div>
+          <div class="field">
+            <label>Seguro de acidentes pessoais (R$/mês)</label>
+            <input type="number" id="seguro-est" value="30" min="0" step="5" oninput="calc()">
+            <span class="hint">Obrigatório por lei. Valor varia por apólice.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS ESTAGIÁRIO -->
+      <div class="card" id="card-est" style="display:none">
+        <div class="card-title">Custos Estagiário (Lei 11.788/2008)</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>Jornada diária (horas)</label>
+            <input type="number" id="jornada-est" value="6" min="4" max="6" step="0.5" oninput="calc()">
+            <span class="hint">Máx. 6h/dia (ensino superior) ou 4h (médio)</span>
+          </div>
+          <div class="field">
+            <label>Seguro de acidentes pessoais (R$/mês)</label>
+            <input type="number" id="seguro-est" value="30" min="0" step="5" oninput="calc()">
+            <span class="hint">Obrigatório por lei. Valor varia por apólice.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENCARGOS ESTAGIÁRIO -->
+      <div class="card" id="card-est" style="display:none">
+        <div class="card-title">Custos Estagiário (Lei 11.788/2008)</div>
+        <div class="cols-2">
+          <div class="field">
+            <label>Jornada diária (horas)</label>
+            <input type="number" id="jornada-est" value="6" min="4" max="6" step="0.5" oninput="calc()">
+            <span class="hint">Máx. 6h/dia (ensino superior) ou 4h (médio)</span>
+          </div>
+          <div class="field">
+            <label>Seguro de acidentes pessoais (R$/mês)</label>
+            <input type="number" id="seguro-est" value="30" min="0" step="5" oninput="calc()">
+            <span class="hint">Obrigatório por lei. Valor varia por apólice.</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- fim coluna inputs -->
+
+    <!-- COLUNA DIREITA: RESULTADO -->
+    <div style="position: sticky; top: 20px;">
+      <div class="result-surface" id="resultado"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ==================== ABA CONFIGURAÇÕES ==================== -->
+<div id="tab-config" class="tab-panel">
+<div class="container">
+
+  <div class="info-box">
+    <strong>Como funciona:</strong> Altere os percentuais abaixo e eles serão aplicados automaticamente à calculadora. As configurações ficam salvas enquanto a página estiver aberta.
+  </div>
+
+  <!-- ENCARGOS CLT -->
+  <div class="config-section-title"><div class="ico">%</div>Encargos CLT — patronal</div>
+  <div class="cols-4">
+    <div class="field">
+      <label>INSS Patronal (%)</label>
+      <input type="number" id="cfg-inss" value="20.00" step="0.01" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">Base legal: 20%</span>
+    </div>
+    <div class="field">
+      <label>FGTS (%)</label>
+      <input type="number" id="cfg-fgts" value="8.00" step="0.01" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">Base legal: 8%</span>
+    </div>
+    <div class="field">
+      <label>RAT × FAP (%)</label>
+      <input type="number" id="cfg-rat" value="1.50" step="0.01" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">1% a 3% conforme CNAE</span>
+    </div>
+    <div class="field">
+      <label>Sistema S / Terceiros (%)</label>
+      <input type="number" id="cfg-sist-s" value="5.80" step="0.01" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">Varia conforme CNAE</span>
+    </div>
+  </div>
+
+  <!-- PROVISÕES -->
+  <div class="config-section-title" style="margin-top:28px"><div class="ico">§</div>Provisões rescisórias (CLT)</div>
+  <div class="cols-4">
+    <div class="field">
+      <label>Provisão 13º salário</label>
+      <input type="number" id="cfg-dec" value="8.333" step="0.001" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">Padrão: 1/12 = 8.333%</span>
+    </div>
+    <div class="field">
+      <label>Provisão férias (%)</label>
+      <input type="number" id="cfg-ferias" value="8.333" step="0.001" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">Padrão: 1/12 = 8.333%</span>
+    </div>
+    <div class="field">
+      <label>1/3 constitucional (%)</label>
+      <input type="number" id="cfg-terco" value="2.778" step="0.001" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">1/3 das férias ÷ 12 = 2.778%</span>
+    </div>
+    <div class="field">
+      <label>Multa FGTS rescisória (%)</label>
+      <input type="number" id="cfg-multa" value="3.333" step="0.001" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">40% FGTS ÷ 12 = 3.333%</span>
+    </div>
+  </div>
+
+  <!-- VALE TRANSPORTE removido: empresa paga VT integral sem desconto -->
+
+  <!-- TURNO NOTURNO -->
+  <div class="config-section-title" style="margin-top:28px"><div class="ico">☽</div>Turno noturno</div>
+
+  <div class="info-box" style="background:var(--amber-bg); border-color:#E8D4A0; color:var(--amber)">
+    <strong>Regra configurada para sua empresa:</strong> Turno 16h–01:48h. Horas noturnas (22h–01:48h) = 3h48min = <strong id="preview-hrs-noturnas">3.8h</strong> noturnas por dia. Adicional noturno de <strong id="preview-adicional">25%</strong> aplicado sobre a fração noturna.
+  </div>
+
+  <div class="cols-4">
+    <div class="field">
+      <label>Início do turno (hh:mm)</label>
+      <input type="time" id="cfg-turno-inicio" value="16:00" oninput="syncConfig(); calc()">
+    </div>
+    <div class="field">
+      <label>Fim do turno (hh:mm)</label>
+      <input type="time" id="cfg-turno-fim" value="01:48" oninput="syncConfig(); calc()">
+    </div>
+    <div class="field">
+      <label>Início período noturno (hh:mm)</label>
+      <input type="time" id="cfg-noturno-inicio" value="22:00" oninput="syncConfig(); calc()">
+    </div>
+    <div class="field">
+      <label>Adicional noturno (%)</label>
+      <input type="number" id="cfg-adicional-not" value="25" step="0.5" min="20" oninput="syncConfig(); calc()">
+      <span class="hint">CLT mín. 20%. Sua empresa: 25%</span>
+    </div>
+  </div>
+
+  <div class="turno-preview" id="config-turno-preview"></div>
+
+  <!-- PJ -->
+  <div class="config-section-title" style="margin-top:28px"><div class="ico">NF</div>Contrato PJ</div>
+  <div class="cols-4">
+    <div class="field">
+      <label>Alíquota padrão impostos NF (%)</label>
+      <input type="number" id="cfg-imp-pj" value="6.00" step="0.01" min="0" oninput="syncConfig(); calc()">
+      <span class="hint">Simples Nacional Anexo III: ~6%</span>
+    </div>
+  </div>
+
+  <button class="btn-reset" onclick="resetConfig()">↺ Restaurar padrões</button>
+
+</div>
+</div>
+
+<script>
+// ===================== ESTADO =====================
+let tipo = 'clt';
+let turno = 'dia';
+
+let cfg = {
+  inss: 20,
+  fgts: 8,
+  rat: 1.5,
+  sistS: 5.8,
+  dec: 8.333,
+  ferias: 8.333,
+  terco: 2.778,
+  multa: 3.333,
+  adicionalNot: 25,
+  turnoInicio: '16:00',
+  turnoFim: '01:48',
+  noturnoInicio: '22:00',
+  impPj: 6,
+};
+
+// ===================== TABS =====================
+function showTab(t) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===================== TIPO =====================
+function setTipo(v) {
+  tipo = v;
+  document.getElementById('btn-clt').classList.toggle('active', v === 'clt');
+  document.getElementById('btn-pj').classList.toggle('active', v === 'pj');
+  document.getElementById('btn-est').classList.toggle('active', v === 'est');
+  document.getElementById('card-clt').style.display = v === 'clt' ? '' : 'none';
+  document.getElementById('card-pj').style.display = v === 'pj' ? '' : 'none';
+  document.getElementById('card-est').style.display = v === 'est' ? '' : 'none';
+  const labels = { clt: 'Bolsa mensal (R$)', pj: 'Valor da NF mensal (R$)', est: 'Bolsa estágio (R$)' };
+  document.getElementById('lbl-salario').textContent = labels[v] || 'Salário bruto (R$)';
+  // Estagiário não tem turno noturno — forçar diurno
+  if (v === 'est') { setTurno('dia'); document.getElementById('btn-noite').disabled = true; }
+  else { document.getElementById('btn-noite').disabled = false; }
+  calc();
+}
+
+// ===================== TURNO =====================
+function setTurno(v) {
+  turno = v;
+  document.getElementById('btn-dia').classList.toggle('active', v === 'dia');
+  document.getElementById('btn-noite').classList.toggle('active', v === 'noite');
+  const info = document.getElementById('turno-info');
+  info.style.display = v === 'noite' ? '' : 'none';
+  if (v === 'noite') updateTurnoPreview();
+  calc();
+}
+
+// ===================== SYNC CONFIG ↔ CALCULADORA =====================
+function syncConfig() {
+  cfg.inss = parseFloat(document.getElementById('cfg-inss').value) || 20;
+  cfg.fgts = parseFloat(document.getElementById('cfg-fgts').value) || 8;
+  cfg.rat = parseFloat(document.getElementById('cfg-rat').value) || 2;
+  cfg.sistS = parseFloat(document.getElementById('cfg-sist-s').value) || 5.8;
+  cfg.dec = parseFloat(document.getElementById('cfg-dec').value) || 8.333;
+  cfg.ferias = parseFloat(document.getElementById('cfg-ferias').value) || 8.333;
+  cfg.terco = parseFloat(document.getElementById('cfg-terco').value) || 2.778;
+  cfg.multa = parseFloat(document.getElementById('cfg-multa').value) || 3.333;
+  cfg.vtDesc = 0;
+  cfg.adicionalNot = parseFloat(document.getElementById('cfg-adicional-not').value) || 25;
+  cfg.turnoInicio = document.getElementById('cfg-turno-inicio').value || '16:00';
+  cfg.turnoFim = document.getElementById('cfg-turno-fim').value || '01:48';
+  cfg.noturnoInicio = document.getElementById('cfg-noturno-inicio').value || '22:00';
+  cfg.impPj = parseFloat(document.getElementById('cfg-imp-pj').value) || 6;
+
+  // espelha RAT e SistS na calculadora
+  document.getElementById('rat-calc').value = cfg.rat.toFixed(2);
+  document.getElementById('sist-s-calc').value = cfg.sistS.toFixed(2);
+
+  updateTurnoPreview();
+  updateConfigPreview();
+}
+
+function syncFromCalc(field) {
+  if (field === 'rat') {
+    cfg.rat = parseFloat(document.getElementById('rat-calc').value) || 2;
+    document.getElementById('cfg-rat').value = cfg.rat.toFixed(2);
+  }
+  if (field === 'sist-s') {
+    cfg.sistS = parseFloat(document.getElementById('sist-s-calc').value) || 5.8;
+    document.getElementById('cfg-sist-s').value = cfg.sistS.toFixed(2);
+  }
+}
+
+// ===================== CÁLCULO HORAS NOTURNAS =====================
+function timeToMinutes(t) {
+  const parts = t.split(':');
+  return parseInt(parts[0]) * 60 + parseInt(parts[1] || 0);
+}
+
+function calcHorasNoturnas() {
+  // Retorna fração das horas noturnas sobre o total da jornada (0..1)
+  const inicioMin = timeToMinutes(cfg.turnoInicio);
+  let fimMin = timeToMinutes(cfg.turnoFim);
+  const noturnoInicioMin = timeToMinutes(cfg.noturnoInicio);
+  const noturnoFimMin = 6 * 60; // 06:00 fim do período noturno CLT
+
+  // Se turno cruza meia-noite
+  if (fimMin <= inicioMin) fimMin += 24 * 60;
+
+  const totalMin = fimMin - inicioMin;
+
+  // Calcular interseção com período noturno (22h–06h, i.e. 22*60 a 30*60)
+  const notIni = noturnoInicioMin; // 22*60 = 1320
+  const notFim = noturnoFimMin + 24 * 60; // 06h do dia seguinte = 30*60 = 1800
+
+  // Turno em minutos absolutos (pode passar de 1440)
+  const tIni = inicioMin;
+  const tFim = fimMin;
+
+  // Interseção
+  const overlapStart = Math.max(tIni, notIni);
+  const overlapEnd = Math.min(tFim, notFim);
+  const notMin = Math.max(0, overlapEnd - overlapStart);
+
+  return { notMin, totalMin, fracaoNoturna: totalMin > 0 ? notMin / totalMin : 0 };
+}
+
+function updateTurnoPreview() {
+  const { notMin, totalMin, fracaoNoturna } = calcHorasNoturnas();
+  const hNot = (notMin / 60).toFixed(1);
+  const hTot = (totalMin / 60).toFixed(1);
+  const addPct = cfg.adicionalNot;
+
+  document.getElementById('turno-info').innerHTML =
+    `Turno: <strong>${cfg.turnoInicio} → ${cfg.turnoFim}</strong> (${hTot}h/dia) · ` +
+    `Horas noturnas (após ${cfg.noturnoInicio}): <strong>${hNot}h</strong> · ` +
+    `Adicional noturno: <strong>${addPct}%</strong> sobre ${(fracaoNoturna*100).toFixed(1)}% da jornada`;
+
+  // preview no config
+  document.getElementById('preview-hrs-noturnas').textContent = hNot + 'h';
+  document.getElementById('preview-adicional').textContent = addPct + '%';
+}
+
+function updateConfigPreview() {
+  const { notMin, totalMin, fracaoNoturna } = calcHorasNoturnas();
+  const hNot = (notMin / 60).toFixed(1);
+  const hTot = (totalMin / 60).toFixed(1);
+  const addEfetivo = (fracaoNoturna * cfg.adicionalNot).toFixed(2);
+
+  document.getElementById('config-turno-preview').innerHTML =
+    `Jornada total: <strong>${hTot}h</strong> · ` +
+    `Horas noturnas: <strong>${hNot}h</strong> (${(fracaoNoturna*100).toFixed(1)}% da jornada) · ` +
+    `Adicional efetivo sobre salário: <strong>${addEfetivo}%</strong> ` +
+    `(${(fracaoNoturna*100).toFixed(1)}% × ${cfg.adicionalNot}%)`;
+}
+
+// ===================== RESET CONFIG =====================
+function resetConfig() {
+  const defaults = { inss:20, fgts:8, rat:1.5, sistS:5.8, dec:8.333, ferias:8.333, terco:2.778, multa:3.333, vtDesc:6, adicionalNot:25, turnoInicio:'16:00', turnoFim:'01:48', noturnoInicio:'22:00', impPj:6 };
+  cfg = {...defaults};
+  document.getElementById('cfg-inss').value = cfg.inss.toFixed(2);
+  document.getElementById('cfg-fgts').value = cfg.fgts.toFixed(2);
+  document.getElementById('cfg-rat').value = cfg.rat.toFixed(2);
+  document.getElementById('cfg-sist-s').value = cfg.sistS.toFixed(2);
+  document.getElementById('cfg-dec').value = cfg.dec.toFixed(3);
+  document.getElementById('cfg-ferias').value = cfg.ferias.toFixed(3);
+  document.getElementById('cfg-terco').value = cfg.terco.toFixed(3);
+  document.getElementById('cfg-multa').value = cfg.multa.toFixed(3);
+  document.getElementById('cfg-adicional-not').value = cfg.adicionalNot;
+  document.getElementById('cfg-turno-inicio').value = cfg.turnoInicio;
+  document.getElementById('cfg-turno-fim').value = cfg.turnoFim;
+  document.getElementById('cfg-noturno-inicio').value = cfg.noturnoInicio;
+  document.getElementById('cfg-imp-pj').value = cfg.impPj.toFixed(2);
+  document.getElementById('rat-calc').value = cfg.rat.toFixed(2);
+  document.getElementById('sist-s-calc').value = cfg.sistS.toFixed(2);
+  updateTurnoPreview();
+  updateConfigPreview();
+  calc();
+}
+
+// ===================== FORMATAÇÃO =====================
+function fmt(v) {
+  return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ===================== RENDERIZAÇÃO =====================
+function renderLines(lines) {
+  return lines.map(l => {
+    if (l.type === 'group') return `<div class="r-group">${l.label}</div>`;
+    if (l.type === 'subtotal') return `<div class="r-subtotal"><span>${l.label}</span><span class="val">${fmt(l.val)}</span></div>`;
+    if (l.type === 'total') return `<div class="r-total"><span>${l.label}</span><span class="val">${fmt(l.val)}</span></div>`;
+    return `<div class="r-line"><span>${l.label}</span><span class="val">${l.obs ? '<span style="font-size:11px;color:var(--text-hint);font-style:italic">' + l.obs + '</span>' : fmt(l.val)}</span></div>`;
+  }).join('');
+}
+
+// ===================== CÁLCULO PRINCIPAL =====================
+function calc() {
+  const salBase = parseFloat(document.getElementById('salario').value) || 0;
+  const diasUteis = parseFloat(document.getElementById('dias-uteis').value) || 22;
+  const vrDia = parseFloat(document.getElementById('vr').value) || 0;
+  const vtDia = parseFloat(document.getElementById('vt').value) || 0;
+  const ps = parseFloat(document.getElementById('ps').value) || 0;
+
+  // Adicional noturno: proporcional às horas noturnas da jornada
+  let adicNoturnoVal = 0;
+  if (turno === 'noite') {
+    const { fracaoNoturna } = calcHorasNoturnas();
+    adicNoturnoVal = salBase * fracaoNoturna * (cfg.adicionalNot / 100);
+  }
+  const salBruto = salBase + adicNoturnoVal;
+
+  let lines = [], total = 0;
+  let metrics = [];
+
+  if (tipo === 'clt') {
+    const inssVal = salBruto * (cfg.inss / 100);
+    const fgtsVal = salBruto * (cfg.fgts / 100);
+    const ratVal = salBruto * (cfg.rat / 100);
+    const sistSVal = salBruto * (cfg.sistS / 100);
+
+    const vrMes = vrDia * diasUteis;
+    const vtBruto = vtDia * diasUteis;
+    const vtLiq = vtBruto;
+
+    const feriasProv = salBruto * (cfg.ferias / 100);
+    const tercoProv = salBruto * (cfg.terco / 100);
+    const decProv = salBruto * (cfg.dec / 100);
+    const fgtsProv = (feriasProv + tercoProv + decProv) * (cfg.fgts / 100);
+    const multaVal = salBruto * (cfg.multa / 100);
+
+    const subRem = salBruto;
+    const subEnc = inssVal + fgtsVal + ratVal + sistSVal;
+    const subBen = vrMes + vtLiq + ps;
+    const subProv = feriasProv + tercoProv + decProv + fgtsProv + multaVal;
+    total = subRem + subEnc + subBen + subProv;
+
+    lines = [{type:'group', label:'Remuneração'}, {label: 'Salário base', val: salBase}];
+    if (adicNoturnoVal > 0) {
+      const {fracaoNoturna} = calcHorasNoturnas();
+      lines.push({label: `Adicional noturno ${cfg.adicionalNot}% × ${(fracaoNoturna*100).toFixed(1)}% jornada`, val: adicNoturnoVal});
+    }
+    lines.push({type:'subtotal', label:'Subtotal remuneração', val: subRem});
+
+    lines.push({type:'group', label:'Encargos patronais'});
+    lines.push({label: `INSS patronal (${cfg.inss}%)`, val: inssVal});
+    lines.push({label: `FGTS (${cfg.fgts}%)`, val: fgtsVal});
+    lines.push({label: `RAT×FAP (${cfg.rat}%)`, val: ratVal});
+    lines.push({label: `Sistema S (${cfg.sistS}%)`, val: sistSVal});
+    lines.push({type:'subtotal', label:'Subtotal encargos', val: subEnc});
+
+    lines.push({type:'group', label:'Benefícios'});
+    lines.push({label: `Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label: `Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtLiq});
+    lines.push({label: 'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+
+    lines.push({type:'group', label:'Provisões mensais (rescisão)'});
+    lines.push({label: `Férias (${cfg.ferias.toFixed(3)}%)`, val: feriasProv});
+    lines.push({label: `1/3 constitucional (${cfg.terco.toFixed(3)}%)`, val: tercoProv});
+    lines.push({label: `13º salário (${cfg.dec.toFixed(3)}%)`, val: decProv});
+    lines.push({label: `FGTS sobre provisões (${cfg.fgts}%)`, val: fgtsProv});
+    lines.push({label: `Multa FGTS (${cfg.multa.toFixed(3)}%)`, val: multaVal});
+    lines.push({type:'subtotal', label:'Subtotal provisões', val: subProv});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+
+    const custoHora = total / (diasUteis * 8);
+    metrics = [
+      {label: 'Custo / hora', val: fmt(custoHora)},
+      {label: `Encargos + provisões`, val: ((subEnc+subProv)/subRem*100).toFixed(1) + '%'},
+      {label: 'Salário líq. aprox.', val: fmt(salBruto * 0.79)},
+    ];
+
+  } else {
+    const nfBruta = salBruto;
+    const impVal = nfBruta * (parseFloat(document.getElementById('imp-pj').value) || cfg.impPj) / 100;
+    const contabilVal = parseFloat(document.getElementById('contabil').value) || 0;
+    const vrMes = vrDia * diasUteis;
+    const vtMes = vtDia * diasUteis;
+
+    const subNF = nfBruta;
+    const subBen = vrMes + vtMes + ps;
+    const subCusto = impVal + contabilVal;
+    total = subNF + subBen + subCusto;
+
+    lines = [{type:'group', label:'Nota Fiscal'}, {label:'Valor NF mensal', val: nfBruta}];
+    if (adicNoturnoVal > 0) lines.push({label:'Adicional noturno embutido na NF', val: adicNoturnoVal});
+    lines.push({type:'subtotal', label:'Subtotal NF', val: subNF});
+
+    lines.push({type:'group', label:'Benefícios pagos pela empresa'});
+    lines.push({label:`Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label:`Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtMes});
+    lines.push({label:'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+
+    lines.push({type:'group', label:'Custos operacionais'});
+    lines.push({label:`Impostos sobre NF (${document.getElementById('imp-pj').value || cfg.impPj}%)`, val: impVal});
+    lines.push({label:'Honorário contábil', val: contabilVal});
+    lines.push({type:'subtotal', label:'Subtotal custos', val: subCusto});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+
+    const custoHora = total / (diasUteis * 8);
+    metrics = [
+      {label:'Custo / hora', val: fmt(custoHora)},
+      {label:'Sem encargos CLT', val: '—'},
+      {label:'Sem provisões rescisórias', val: '—'},
+    ];
+  }
+
+  if (tipo === 'est') {
+    const bolsa = salBase;
+    const jornadaH = parseFloat(document.getElementById('jornada-est').value) || 6;
+    const seguro = parseFloat(document.getElementById('seguro-est').value) || 30;
+    const vrMes = vrDia * diasUteis;
+    const vtMes = vtDia * diasUteis;
+
+    // Recesso proporcional (equivalente a férias): 1/12 da bolsa + 1/3
+    const recessoProv = bolsa / 12;
+    const tercoRecesso = (bolsa / 12) * (1/3);
+
+    const subBolsa = bolsa;
+    const subBen = vrMes + vtMes + ps;
+    const subProv = recessoProv + tercoRecesso;
+    const subEnc = seguro;
+    total = subBolsa + subBen + subProv + subEnc;
+
+    lines = [{type:'group', label:'Remuneração'}];
+    lines.push({label: 'Bolsa estágio', val: bolsa});
+    lines.push({type:'subtotal', label:'Subtotal bolsa', val: subBolsa});
+
+    lines.push({type:'group', label:'Benefícios'});
+    lines.push({label: `Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label: `Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtMes});
+    lines.push({label: 'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+
+    lines.push({type:'group', label:'Provisões (recesso remunerado)'});
+    lines.push({label: 'Recesso proporcional (1/12)', val: recessoProv});
+    lines.push({label: '1/3 constitucional recesso', val: tercoRecesso});
+    lines.push({type:'subtotal', label:'Subtotal provisões', val: subProv});
+
+    lines.push({type:'group', label:'Encargos obrigatórios'});
+    lines.push({label: 'Seguro contra acidentes pessoais', val: seguro});
+    lines.push({label: 'INSS patronal', val: 0, obs: 'Isento' });
+    lines.push({label: 'FGTS', val: 0, obs: 'Isento' });
+    lines.push({label: '13º salário', val: 0, obs: 'Não se aplica' });
+    lines.push({type:'subtotal', label:'Subtotal encargos', val: subEnc});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+
+    const jornadaMensal = jornadaH * diasUteis;
+    const custoHora = total / jornadaMensal;
+    metrics = [
+      {label: 'Custo / hora', val: fmt(custoHora)},
+      {label: `Jornada (${jornadaH}h/dia)`, val: jornadaMensal.toFixed(0) + 'h/mês'},
+      {label: 'Sem FGTS e INSS', val: '—'},
+    ];
+  }
+
+  if (tipo === 'est') {
+    const bolsa = salBase;
+    const jornadaH = parseFloat(document.getElementById('jornada-est').value) || 6;
+    const seguro = parseFloat(document.getElementById('seguro-est').value) || 30;
+    const vrMes = vrDia * diasUteis;
+    const vtMes = vtDia * diasUteis;
+    const recessoProv = bolsa / 12;
+    const tercoRecesso = (bolsa / 12) * (1/3);
+    const subBolsa = bolsa;
+    const subBen = vrMes + vtMes + ps;
+    const subProv = recessoProv + tercoRecesso;
+    const subEnc = seguro;
+    total = subBolsa + subBen + subProv + subEnc;
+    lines = [{type:'group', label:'Remuneração'}];
+    lines.push({label: 'Bolsa estágio', val: bolsa});
+    lines.push({type:'subtotal', label:'Subtotal bolsa', val: subBolsa});
+    lines.push({type:'group', label:'Benefícios'});
+    lines.push({label: `Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label: `Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtMes});
+    lines.push({label: 'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+    lines.push({type:'group', label:'Provisões (recesso remunerado)'});
+    lines.push({label: 'Recesso proporcional (1/12)', val: recessoProv});
+    lines.push({label: '1/3 constitucional recesso', val: tercoRecesso});
+    lines.push({type:'subtotal', label:'Subtotal provisões', val: subProv});
+    lines.push({type:'group', label:'Encargos obrigatórios'});
+    lines.push({label: 'Seguro contra acidentes pessoais', val: seguro});
+    lines.push({label: 'INSS patronal', val: 0, obs: 'Isento'});
+    lines.push({label: 'FGTS', val: 0, obs: 'Isento'});
+    lines.push({label: '13º salário', val: 0, obs: 'Não se aplica'});
+    lines.push({type:'subtotal', label:'Subtotal encargos', val: subEnc});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+    const jornadaMensal = jornadaH * diasUteis;
+    const custoHora = total / jornadaMensal;
+    metrics = [
+      {label: 'Custo / hora', val: fmt(custoHora)},
+      {label: `Jornada (${jornadaH}h/dia)`, val: jornadaMensal.toFixed(0) + 'h/mês'},
+      {label: 'Sem FGTS e INSS', val: '—'},
+    ];
+  }
+
+  if (tipo === 'est') {
+    const bolsa = salBase;
+    const jornadaH = parseFloat(document.getElementById('jornada-est').value) || 6;
+    const seguro = parseFloat(document.getElementById('seguro-est').value) || 30;
+    const vrMes = vrDia * diasUteis;
+    const vtMes = vtDia * diasUteis;
+    const recessoProv = bolsa / 12;
+    const tercoRecesso = (bolsa / 12) * (1/3);
+    const subBolsa = bolsa;
+    const subBen = vrMes + vtMes + ps;
+    const subProv = recessoProv + tercoRecesso;
+    const subEnc = seguro;
+    total = subBolsa + subBen + subProv + subEnc;
+    lines = [{type:'group', label:'Remuneração'}];
+    lines.push({label: 'Bolsa estágio', val: bolsa});
+    lines.push({type:'subtotal', label:'Subtotal bolsa', val: subBolsa});
+    lines.push({type:'group', label:'Benefícios'});
+    lines.push({label: `Vale Refeição (${diasUteis} dias × R$${vrDia})`, val: vrMes});
+    lines.push({label: `Vale Transporte (${diasUteis} dias × R$${vtDia})`, val: vtMes});
+    lines.push({label: 'Plano de Saúde', val: ps});
+    lines.push({type:'subtotal', label:'Subtotal benefícios', val: subBen});
+    lines.push({type:'group', label:'Provisões (recesso remunerado)'});
+    lines.push({label: 'Recesso proporcional (1/12)', val: recessoProv});
+    lines.push({label: '1/3 constitucional recesso', val: tercoRecesso});
+    lines.push({type:'subtotal', label:'Subtotal provisões', val: subProv});
+    lines.push({type:'group', label:'Encargos obrigatórios'});
+    lines.push({label: 'Seguro contra acidentes pessoais', val: seguro});
+    lines.push({label: 'INSS patronal', val: 0, obs: 'Isento'});
+    lines.push({label: 'FGTS', val: 0, obs: 'Isento'});
+    lines.push({label: '13º salário', val: 0, obs: 'Não se aplica'});
+    lines.push({type:'subtotal', label:'Subtotal encargos', val: subEnc});
+    lines.push({type:'total', label:'Custo total mensal', val: total});
+    const jornadaMensal = jornadaH * diasUteis;
+    const custoHora = total / jornadaMensal;
+    metrics = [
+      {label: 'Custo / hora', val: fmt(custoHora)},
+      {label: `Jornada (${jornadaH}h/dia)`, val: jornadaMensal.toFixed(0) + 'h/mês'},
+      {label: 'Sem FGTS e INSS', val: '—'},
+    ];
+  }
+
+  const turnoTag = turno === 'noite'
+    ? `<span class="tag tag-noite">Noturno ${cfg.adicionalNot}%</span>`
+    : `<span class="tag tag-noite-off">Diurno</span>`;
+
+  document.getElementById('resultado').innerHTML = `
+    <div class="result-hero">
+      <div>
+        <div class="label">CUSTO TOTAL MENSAL</div>
+        <div class="total">${fmt(total)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <span class="badge">${tipo === 'est' ? 'ESTAGIÁRIO' : tipo.toUpperCase()}</span>
+        ${turnoTag}
+      </div>
+    </div>
+    <div class="result-metrics">
+      ${metrics.map(m => `<div class="metric-box"><div class="m-label">${m.label}</div><div class="m-val">${m.val}</div></div>`).join('')}
+    </div>
+    <div class="result-lines">${renderLines(lines)}</div>
+  `;
+}
+
+// ===================== INIT =====================
+updateTurnoPreview();
+updateConfigPreview();
+calc();
+</script>
+</body>
+</html>
