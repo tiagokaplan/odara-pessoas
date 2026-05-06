@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Triagem de Currículos — RH</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
@@ -194,6 +196,120 @@
     .scores-grid { grid-template-columns: 1fr 1fr; }
     .pros-cons { grid-template-columns: 1fr; }
   }
+
+  /* BOTÃO ROTEIRO */
+  .btn-roteiro {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 14px; padding: 9px 16px;
+    background: #F5A623; color: #1E1B18;
+    border: none; border-radius: 6px;
+    font-size: 13px; font-weight: 600;
+    font-family: 'IBM Plex Sans', sans-serif;
+    cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+    width: 100%;
+    justify-content: center;
+  }
+  .btn-roteiro:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-roteiro:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+  .btn-roteiro .btn-spinner {
+    width: 13px; height: 13px; border: 2px solid rgba(30,27,24,0.3);
+    border-top-color: #1E1B18; border-radius: 50%;
+    animation: spin 0.7s linear infinite; display: none;
+  }
+  .btn-roteiro.loading .btn-spinner { display: block; }
+  .btn-roteiro.loading .btn-ico { display: none; }
+
+  /* MODAL ROTEIRO */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(30,27,24,0.55); z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 14px;
+    max-width: 720px; width: 100%; max-height: 88vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .modal-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-header-info { display: flex; flex-direction: column; gap: 3px; }
+  .modal-eyebrow {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #F03040;
+  }
+  .modal-candidate { font-size: 17px; font-weight: 600; color: var(--text); }
+  .modal-cargo { font-size: 12px; color: var(--text-hint); }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    font-size: 20px; color: var(--text-hint); padding: 0 4px;
+    line-height: 1; transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+
+  /* BLOCOS DO ROTEIRO */
+  .roteiro-bloco { margin-bottom: 22px; }
+  .roteiro-bloco:last-child { margin-bottom: 0; }
+  .rb-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-hint);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .rb-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .rb-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+  .perguntas-list { display: flex; flex-direction: column; gap: 8px; }
+  .pergunta-item {
+    background: var(--surface2); border-radius: 8px;
+    padding: 12px 14px; font-size: 13px; color: var(--text);
+    line-height: 1.55; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .pq-num {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    font-weight: 500; color: #F03040; flex-shrink: 0;
+    background: #FDEAEC; border-radius: 4px;
+    padding: 2px 6px; margin-top: 1px;
+  }
+  .pq-objetivo {
+    font-size: 11px; color: var(--text-hint); margin-top: 5px;
+    font-style: italic; line-height: 1.4;
+  }
+
+  .modal-footer {
+    padding: 14px 24px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-shrink: 0;
+  }
+  .btn-imprimir {
+    flex: 1; padding: 10px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; font-weight: 500; font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+  }
+  .btn-imprimir:hover { border-color: var(--text); color: var(--text); }
+  .roteiro-loading {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 48px 24px; gap: 14px;
+  }
+  .roteiro-loading .spinner {
+    width: 28px; height: 28px; border: 2px solid var(--border);
+    border-top-color: #F03040; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .roteiro-loading p { font-size: 13px; color: var(--text-muted); }
+
+  @media print {
+    .modal-overlay { position: static; background: none; padding: 0; }
+    .modal { max-height: none; box-shadow: none; }
+    .modal-footer, .modal-close { display: none; }
+    .btn-roteiro, .results-header, .info-box { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -503,7 +619,13 @@ Os candidatos devem estar ordenados do maior para o menor score_total. O score_t
   }
 
   // ===== RENDERIZAÇÃO =====
+  // Armazena dados da triagem para uso no roteiro
+  let dadosTriagem = { candidatos: [], cargo: '', descricao: '' };
+
   function renderResultados(data, cargo, total) {
+    dadosTriagem.candidatos = data.candidatos;
+    dadosTriagem.cargo = cargo;
+    dadosTriagem.descricao = document.getElementById('descricao').value;
     document.getElementById('loading-box').classList.remove('show');
     document.getElementById('results-area').classList.add('show');
     document.getElementById('results-meta').textContent =
@@ -549,6 +671,11 @@ Os candidatos devem estar ordenados do maior para o menor score_total. O score_t
               </div>
             </div>
             ${c.pretensao_salarial && c.pretensao_salarial !== 'Não informado' ? `<div style="margin-top:12px;font-size:12px;color:var(--text-hint)">Pretensão salarial declarada: <strong style="color:var(--text)">${c.pretensao_salarial}</strong></div>` : ''}
+            <button class="btn-roteiro" id="btn-roteiro-${i}" onclick="gerarRoteiro(${i})">
+              <span class="btn-ico">📝</span>
+              <div class="btn-spinner"></div>
+              Gerar roteiro de entrevista
+            </button>
           </div>
         </div>`;
     }).join('');
@@ -567,6 +694,269 @@ Os candidatos devem estar ordenados do maior para o menor score_total. O score_t
     document.getElementById('btn-analisar').disabled = true;
     document.getElementById('file-input').value = '';
   }
+
+  // ===== ROTEIRO DE ENTREVISTA =====
+  async function gerarRoteiro(idx) {
+    const c = dadosTriagem.candidatos[idx];
+    const btn = document.getElementById('btn-roteiro-' + idx);
+    document.getElementById('modal-nome-candidato').textContent = c.nome;
+    document.getElementById('modal-cargo-candidato').textContent =
+      (c.cargo_atual || '') + (c.localizacao ? ' · ' + c.localizacao : '');
+    document.getElementById('modal-body').innerHTML = `
+      <div class="roteiro-loading">
+        <div class="spinner"></div>
+        <p>Gerando roteiro personalizado para ${c.nome}...</p>
+      </div>`;
+    document.getElementById('modal-roteiro').classList.add('show');
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    const prompt = `Você é um especialista em seleção de pessoas. Com base no perfil do candidato e na vaga abaixo, crie um roteiro estruturado de entrevista personalizado.
+
+VAGA: ${dadosTriagem.cargo}
+DESCRIÇÃO DA VAGA: ${dadosTriagem.descricao}
+
+PERFIL DO CANDIDATO:
+- Nome: ${c.nome}
+- Cargo atual/recente: ${c.cargo_atual || 'Não informado'}
+- Localização: ${c.localizacao || 'Não informado'}
+- Resumo: ${c.resumo}
+- Pontos fortes: ${(c.pontos_fortes || []).join(', ')}
+- Pontos de atenção: ${(c.pontos_fracos || []).join(', ')}
+- Score geral: ${c.score_total}/100
+
+Crie um roteiro de entrevista completo. Retorne SOMENTE JSON válido, sem markdown, neste formato:
+{
+  "duracao_sugerida": "40 minutos",
+  "intro": "Texto de 2 frases orientando o entrevistador sobre o perfil e o tom da conversa",
+  "blocos": [
+    {
+      "titulo": "Nome do bloco",
+      "descricao": "Orientação breve para o entrevistador sobre o objetivo deste bloco",
+      "perguntas": [
+        { "pergunta": "Texto da pergunta", "objetivo": "O que esta pergunta quer revelar" }
+      ]
+    }
+  ],
+  "encerramento": "Sugestão de como fechar a entrevista e próximos passos"
+}
+
+Crie exatamente 5 blocos: Abertura, Trajetória, Competências técnicas, Pontos de atenção, Fit cultural. MÁXIMO 2 perguntas por bloco. Duração total da entrevista: 40 minutos. Seja direto e objetivo nas perguntas. JSON apenas, sem texto extra.`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await resp.json();
+      console.log('API response status:', resp.status);
+      console.log('API data:', JSON.stringify(data).slice(0, 300));
+      if (data.error) throw new Error('API: ' + data.error.type + ' — ' + data.error.message);
+      if (!data.content) throw new Error('Resposta inesperada: ' + JSON.stringify(data).slice(0,200));
+      const text = data.content.map(b => b.text || '').join('');
+      const clean = text.replace(/```json|```/g, '').trim();
+      let roteiro;
+      try {
+        roteiro = JSON.parse(clean);
+      } catch(pe) {
+        // Tentar reparar JSON truncado: fechar arrays e objetos abertos
+        let fixed = clean;
+        // Contar chaves e colchetes abertos
+        let braces = 0, brackets = 0;
+        let inStr = false, escape = false;
+        for (let ch of fixed) {
+          if (escape) { escape = false; continue; }
+          if (ch === '\\') { escape = true; continue; }
+          if (ch === '"') { inStr = !inStr; continue; }
+          if (inStr) continue;
+          if (ch === '{') braces++;
+          if (ch === '}') braces--;
+          if (ch === '[') brackets++;
+          if (ch === ']') brackets--;
+        }
+        // Fechar pendências
+        while (brackets > 0) { fixed += ']'; brackets--; }
+        while (braces > 0) { fixed += '}'; braces--; }
+        try {
+          roteiro = JSON.parse(fixed);
+        } catch(pe2) {
+          throw new Error('JSON inválido mesmo após reparo: ' + pe.message);
+        }
+      }
+      renderRoteiro(roteiro);
+    } catch(err) {
+      console.error('Erro roteiro:', err);
+      let errMsg = err.message || String(err);
+      // Tentar capturar erro da API se disponível
+      try {
+        if (err.response) {
+          const errData = await err.response.json();
+          errMsg = JSON.stringify(errData);
+        }
+      } catch(e2) {}
+      document.getElementById('modal-body').innerHTML =
+        '<div style="padding:32px;text-align:center;font-size:13px">' +
+        '<div style="color:#8A1A1A;font-weight:600;margin-bottom:8px">Erro ao gerar roteiro</div>' +
+        '<div style="color:var(--text-muted);font-size:12px;word-break:break-all">' + errMsg + '</div>' +
+        '</div>';
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  function renderRoteiro(r) {
+    let html = '';
+    html += `<div class="roteiro-bloco">
+      <div class="rb-title">Orientação geral</div>
+      <div class="rb-desc">${r.intro}</div>
+      <div style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-hint);background:var(--surface2);padding:6px 12px;border-radius:99px;margin-top:8px">
+        ⏱ Duração sugerida: <strong style="color:var(--text)">${r.duracao_sugerida}</strong>
+      </div>
+    </div>`;
+    r.blocos.forEach((bloco, bi) => {
+      html += `<div class="roteiro-bloco">
+        <div class="rb-title">${bi + 1}. ${bloco.titulo}</div>
+        <div class="rb-desc">${bloco.descricao}</div>
+        <div class="perguntas-list">
+          ${bloco.perguntas.map((p, pi) => `
+            <div class="pergunta-item">
+              <span class="pq-num">${bi+1}.${pi+1}</span>
+              <div>
+                <div>${p.pergunta}</div>
+                <div class="pq-objetivo">↳ ${p.objetivo}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    });
+    html += `<div class="roteiro-bloco">
+      <div class="rb-title">Encerramento</div>
+      <div class="rb-desc">${r.encerramento}</div>
+    </div>`;
+    document.getElementById('modal-body').innerHTML = html;
+  }
+
+  function fecharModal() {
+    document.getElementById('modal-roteiro').classList.remove('show');
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('modal-roteiro').addEventListener('click', function(e) {
+      if (e.target === this) fecharModal();
+    });
+  });
+
+  async function baixarPDF() {
+    const btn = document.getElementById('btn-baixar-pdf');
+    const nomeCandidato = document.getElementById('modal-nome-candidato').textContent || 'candidato';
+    const nomeArquivo = 'roteiro-' + nomeCandidato.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '.pdf';
+
+    btn.disabled = true;
+    btn.textContent = 'Gerando PDF...';
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      const modalBody = document.getElementById('modal-body');
+      const canvas = await html2canvas(modalBody, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 12;
+      const usableW = pageW - margin * 2;
+      const imgH = (canvas.height * usableW) / canvas.width;
+
+      // Cabeçalho
+      doc.setFillColor(240, 48, 64); // vermelho Odara
+      doc.rect(0, 0, pageW, 18, 'F');
+      doc.setTextColor(255, 253, 248);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('ODARA ALFAJORES  ·  ROTEIRO DE ENTREVISTA', margin, 11);
+      doc.setTextColor(245, 166, 35);
+      doc.text(nomeCandidato.toUpperCase(), pageW - margin, 11, { align: 'right' });
+
+      // Conteúdo — paginar se necessário
+      const offsetY = 22;
+      let remainingH = imgH;
+      let srcY = 0;
+      let pageNum = 0;
+
+      while (remainingH > 0) {
+        if (pageNum > 0) {
+          doc.addPage();
+          doc.setFillColor(240, 48, 64);
+          doc.rect(0, 0, pageW, 18, 'F');
+        }
+        const sliceH = Math.min(remainingH, pageH - offsetY - 10);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = (sliceH / usableW) * canvas.width;
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, srcY * canvas.width / usableW, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+        const sliceImg = sliceCanvas.toDataURL('image/png');
+        doc.addImage(sliceImg, 'PNG', margin, offsetY, usableW, sliceH);
+        srcY += sliceH;
+        remainingH -= sliceH;
+        pageNum++;
+      }
+
+      // Rodapé
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(180, 168, 158);
+        doc.text('Odara Alfajores · Uso interno · RH', margin, pageH - 5);
+        doc.text(`${i} / ${totalPages}`, pageW - margin, pageH - 5, { align: 'right' });
+      }
+
+      doc.save(nomeArquivo);
+    } catch(err) {
+      console.error('Erro PDF:', err);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⬇ Baixar PDF do roteiro';
+    }
+  }
 </script>
+
+<!-- MODAL ROTEIRO DE ENTREVISTA -->
+<div class="modal-overlay" id="modal-roteiro">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-info">
+        <span class="modal-eyebrow">Roteiro de entrevista</span>
+        <span class="modal-candidate" id="modal-nome-candidato"></span>
+        <span class="modal-cargo" id="modal-cargo-candidato"></span>
+      </div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="roteiro-loading">
+        <div class="spinner"></div>
+        <p>Gerando roteiro personalizado...</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-imprimir" id="btn-baixar-pdf" onclick="baixarPDF()">⬇ Baixar PDF do roteiro</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
