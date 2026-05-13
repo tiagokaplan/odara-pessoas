@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revisor de Folha — RH Odara</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --red:#F03040;--yellow:#F5A623;--bk:#1E1B18;--wh:#FFFDF8;
+  --cream:#FDF6EC;--gray:#F2EDE6;--border:#E8E0D5;--border2:#C8C0B5;
+  --muted:#7A6E65;--hint:#B0A89E;
+  --green:#1E6B45;--gbg:#E8F5EE;--gborder:#A8D5BC;
+  --amber:#7A4A00;--abg:#FDF3DC;--aborder:#E8D4A0;
+  --danger:#8A1A1A;--dbg:#F8E8E8;--dborder:#E8B8B8;
+  --blue:#1A4A8A;--bbg:#E8EFF8;--bborder:#C5D5EB;
+  --r:6px;--rl:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--bk);min-height:100vh;font-size:14px;}
+header{background:var(--red);padding:0 40px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+.hl{display:flex;align-items:center;gap:16px;}
+.back{font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;font-family:'IBM Plex Mono',monospace;transition:color .15s;}
+.back:hover{color:var(--yellow);}
+.hsep{width:1px;height:16px;background:rgba(255,255,255,.25);}
+.htitle{font-size:14px;font-weight:500;color:#fff;}
+.htag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.05em;}
+.main{max-width:1100px;margin:0 auto;padding:28px 40px 80px;}
+.card{background:var(--wh);border:1px solid var(--border);border-radius:var(--rl);padding:20px 22px;margin-bottom:14px;}
+.ctitle{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--hint);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ctitle::after{content:'';flex:1;height:1px;background:var(--border);}
+.dz{border:1.5px dashed var(--border2);border-radius:var(--rl);padding:24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray);}
+.dz:hover,.dz.over{border-color:var(--red);background:var(--cream);}
+.dz input{display:none;}
+.dz-ico{font-size:24px;margin-bottom:6px;}
+.dz-t{font-size:14px;font-weight:500;margin-bottom:3px;}
+.dz-s{font-size:12px;color:var(--hint);}
+.file-chip{display:flex;align-items:center;gap:8px;background:var(--gbg);border:1px solid var(--gborder);border-radius:var(--r);padding:8px 12px;margin-top:8px;font-size:13px;color:var(--green);font-weight:500;}
+.file-chip .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-chip .rm{background:none;border:none;cursor:pointer;color:var(--green);font-size:16px;opacity:.7;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;font-weight:500;color:var(--muted);}
+.field input{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r);font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:var(--bk);background:var(--wh);}
+.field input:focus{outline:none;border-color:var(--bk);}
+.field .fhint{font-size:11px;color:var(--hint);}
+.btn-go{width:100%;padding:13px;background:var(--yellow);color:var(--bk);border:none;border-radius:var(--r);font-size:15px;font-weight:600;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:opacity .15s;margin-top:6px;}
+.btn-go:hover{opacity:.88;}
+.btn-go:disabled{opacity:.4;cursor:not-allowed;}
+.loading{display:none;text-align:center;padding:48px 24px;}
+.loading.show{display:block;}
+.spin{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.lstep{font-size:12px;color:var(--hint);margin-top:6px;font-family:'IBM Plex Mono',monospace;}
+.res{display:none;}
+.res.show{display:block;}
+.res-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.res-top h2{font-size:18px;font-weight:500;}
+.res-meta{font-size:12px;color:var(--hint);font-family:'IBM Plex Mono',monospace;margin-top:3px;}
+.res-btns{display:flex;gap:8px;}
+.btn-sec{padding:8px 14px;background:none;border:1px solid var(--border);border-radius:var(--r);font-size:12px;font-weight:500;font-family:'IBM Plex Sans',sans-serif;color:var(--muted);cursor:pointer;transition:all .15s;}
+.btn-sec:hover{border-color:var(--bk);color:var(--bk);}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.sum-box{background:var(--wh);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;}
+.sum-box.red{border-color:var(--dborder);background:var(--dbg);}
+.sum-box.amber{border-color:var(--aborder);background:var(--abg);}
+.sum-box.green{border-color:var(--gborder);background:var(--gbg);}
+.sum-box .sl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hint);margin-bottom:3px;}
+.sum-box.red .sl{color:var(--danger);}
+.sum-box.amber .sl{color:var(--amber);}
+.sum-box.green .sl{color:var(--green);}
+.sum-box .sv{font-size:26px;font-weight:500;font-family:'IBM Plex Mono',monospace;}
+.ia-box{background:var(--bbg);border:1px solid var(--bborder);border-radius:var(--rl);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--blue);line-height:1.6;}
+.filtros{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.fb{padding:5px 14px;border-radius:99px;border:1px solid var(--border);background:var(--wh);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.fb.active{background:var(--bk);color:var(--wh);border-color:var(--bk);}
+.fb .cnt{background:var(--red);color:#fff;border-radius:99px;padding:1px 6px;font-size:10px;}
+.fb.active .cnt{background:rgba(255,255,255,.3);}
+.colab-card{background:var(--wh);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:10px;overflow:hidden;}
+.colab-card.verde{border-left:4px solid var(--green);}
+.colab-card.amarelo{border-left:4px solid var(--yellow);}
+.colab-card.vermelho{border-left:4px solid var(--red);}
+.colab-header{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none;}
+.farol{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.colab-info{flex:1;min-width:0;}
+.colab-nome{font-size:14px;font-weight:500;}
+.colab-sub{font-size:12px;color:var(--hint);margin-top:1px;}
+.colab-badges{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase;}
+.bv{background:var(--dbg);color:var(--danger);}
+.ba{background:var(--abg);color:var(--amber);}
+.bg{background:var(--gbg);color:var(--green);}
+.exp-ico{color:var(--hint);font-size:11px;transition:transform .2s;flex-shrink:0;}
+.colab-card.open .exp-ico{transform:rotate(180deg);}
+.colab-body{display:none;padding:0 18px 16px;border-top:1px solid var(--border);}
+.colab-card.open .colab-body{display:block;}
+.campos-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px;}
+.campos-table th{background:var(--gray);padding:7px 10px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--hint);border-bottom:1px solid var(--border);}
+.campos-table td{padding:7px 10px;border-bottom:.5px solid var(--border);vertical-align:middle;}
+.campos-table tr:last-child td{border-bottom:none;}
+.campos-table tr:hover td{background:var(--gray);}
+.cn{font-weight:500;color:var(--bk);}
+.mv{font-family:'IBM Plex Mono',monospace;font-size:12px;}
+.err{color:var(--danger);}
+.warn{color:var(--amber);}
+.ok{color:var(--green);}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle;}
+.dr{background:var(--red);}
+.da{background:var(--yellow);}
+.dv{background:var(--green);}
+.dtag{font-size:10px;padding:1px 6px;border-radius:3px;margin-left:6px;}
+.dtr{background:var(--dbg);color:var(--danger);}
+.dta{background:var(--abg);color:var(--amber);}
+@media(max-width:680px){
+  .main{padding:16px;}header{padding:0 16px;}
+  .grid3{grid-template-columns:1fr;}
+  .summary{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">
+    <a class="back" href="index.html">← voltar</a>
+    <div class="hsep"></div>
+    <span class="htitle">Revisor de Folha de Pagamento</span>
+  </div>
+  <span class="htag">RH · IA</span>
+</header>
+
+<div class="main">
+<div id="form-area">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card">
+      <div class="ctitle">Prévia da folha (PDF)</div>
+      <div class="dz" id="dz-pdf" onclick="document.getElementById('inp-pdf').click()"
+        ondragover="dzO(event,'dz-pdf')" ondragleave="dzL('dz-pdf')" ondrop="dzD(event,'pdf')">
+        <input type="file" id="inp-pdf" accept=".pdf" onchange="loadPDF(this.files[0])">
+        <div class="dz-ico">📄</div>
+        <div class="dz-t">Clique ou arraste o PDF</div>
+        <div class="dz-s">Prévia exportada do sistema de folha</div>
+      </div>
+      <div id="pdf-ok"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Planilha de referência RH (Excel)</div>
+      <div class="dz" id="dz-xl" onclick="document.getElementById('inp-xl').click()"
+        ondragover="dzO(event,'dz-xl')" ondragleave="dzL('dz-xl')" ondrop="dzD(event,'xl')">
+        <input type="file" id="inp-xl" accept=".xlsx,.xls,.csv" onchange="loadXL(this.files[0])">
+        <div class="dz-ico">📊</div>
+        <div class="dz-t">Clique ou arraste a planilha</div>
+        <div class="dz-s">referencia-rh-odara.xlsx · aba "Referencia RH"</div>
+      </div>
+      <div id="xl-ok"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Parâmetros da competência</div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="field"><label>Mês / Ano</label><input type="month" id="mes" value="2026-04"></div>
+      <div class="field"><label>Dias úteis no mês</label><input type="number" id="dias-uteis" value="22" min="1" max="31"></div>
+      <div class="field"><label>Salário mínimo (R$)</label><input type="number" id="sal-min" value="1518.00" step="0.01"></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Limite consignado (%)</label><input type="number" id="lim-cons" value="35" step="1"><span class="fhint">Margem legal: 35%</span></div>
+      <div class="field"><label>Adicional noturno CCT (%)</label><input type="number" id="ad-not" value="25" step="1"><span class="fhint">CCT Odara: 25%</span></div>
+      <div class="field"><label>Tolerância diferença (R$)</label><input type="number" id="tolerancia" value="1.00" step="0.50"><span class="fhint">Diferenças abaixo disso = ignoradas</span></div>
+    </div>
+  </div>
+
+  <button class="btn-go" id="btn-rev" onclick="revisar()" disabled>Revisar folha com IA</button>
+</div>
+
+<div class="card loading" id="loading">
+  <div class="spin"></div>
+  <p style="font-size:14px;color:var(--muted)">Analisando folha de pagamento...</p>
+  <div class="lstep" id="lstep">Lendo arquivos</div>
+</div>
+
+<div class="res" id="res-area">
+  <div class="res-top">
+    <div>
+      <h2>Resultado da revisão</h2>
+      <div class="res-meta" id="res-meta"></div>
+    </div>
+    <div class="res-btns">
+      <button class="btn-sec" onclick="baixarPDF()">⬇ Exportar PDF</button>
+      <button class="btn-sec" onclick="resetar()">← Nova revisão</button>
+    </div>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div class="ia-box" id="ia-box"></div>
+  <div class="filtros">
+    <button class="fb active" onclick="filtrar('todos',this)">Todos <span class="cnt" id="cnt-t">0</span></button>
+    <button class="fb" onclick="filtrar('vermelho',this)">🔴 Vermelho <span class="cnt" id="cnt-r">0</span></button>
+    <button class="fb" onclick="filtrar('amarelo',this)">🟡 Amarelo <span class="cnt" id="cnt-a">0</span></button>
+    <button class="fb" onclick="filtrar('verde',this)">🟢 Verde <span class="cnt" id="cnt-v">0</span></button>
+  </div>
+  <div id="cards"></div>
+</div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let pdfText='',xlData=[],todos=[];
+
+function dzO(e,id){e.preventDefault();document.getElementById(id).classList.add('over');}
+function dzL(id){document.getElementById(id).classList.remove('over');}
+function dzD(e,t){e.preventDefault();const id=t==='pdf'?'dz-pdf':'dz-xl';document.getElementById(id).classList.remove('over');const f=e.dataTransfer.files[0];if(f)t==='pdf'?loadPDF(f):loadXL(f);}
+
+async function loadPDF(file){
+  if(!file)return;
+  const el=document.getElementById('pdf-ok');
+  el.innerHTML='<div class="file-chip"><span>⏳</span><span class="fn">'+file.name+'</span><span style="font-size:11px;color:var(--amber)">Lendo...</span></div>';
+  try{
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let txt='';
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i);
+      const ct=await pg.getTextContent();
+      txt+=ct.items.map(s=>s.str).join(' ')+'\n';
+    }
+    pdfText=txt.trim();
+    el.innerHTML='<div class="file-chip"><span>✓</span><span class="fn">'+file.name+'</span><span style="font-size:11px;opacity:.7">'+pdf.numPages+' pág. · '+Math.round(pdfText.length/1000)+'k chars</span><button class="rm" onclick="pdfText=\'\';document.getElementById(\'pdf-ok\').innerHTML=\'\';checkReady()">×</button></div>';
+  }catch(e){el.innerHTML='<div class="file-chip" style="background:var(--dbg);border-color:var(--dborder);color:var(--danger)">Erro: '+e.message+'</div>';}
+  checkReady();
+}
+
+function loadXL(file){
+  if(!file)return;
+  const el=document.getElementById('xl-ok');
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const sn=wb.SheetNames.includes('Referencia RH')?'Referencia RH':wb.SheetNames[0];
+      const ws=wb.Sheets[sn];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      let hRow=-1;
+      for(let i=0;i<rows.length;i++){
+        if(rows[i].some(v=>String(v).toLowerCase().includes('colaborador'))){hRow=i;break;}
+      }
+      if(hRow===-1)throw new Error('Coluna "Colaborador" não encontrada');
+      const headers=rows[hRow].map(h=>String(h).trim());
+      xlData=[];
+      for(let i=hRow+1;i<rows.length;i++){
+        const row=rows[i];
+        if(!row[0]&&!row[1])continue;
+        const obj={};
+        headers.forEach((h,j)=>{obj[h]=row[j]??'';});
+        const nome=String(obj['Colaborador']||'').trim();
+        if(nome&&!nome.toLowerCase().includes('total')&&nome.toLowerCase()!=='preencher')
+          xlData.push(obj);
+      }
+      el.innerHTML='<div class="file-chip"><span>✓</span><span class="fn">'+file.name+' ('+sn+')</span><span style="font-size:11px;opacity:.7">'+xlData.length+' colaboradores</span><button class="rm" onclick="xlData=[];document.getElementById(\'xl-ok\').innerHTML=\'\';checkReady()">×</button></div>';
+    }catch(e){el.innerHTML='<div class="file-chip" style="background:var(--dbg);border-color:var(--dborder);color:var(--danger)">Erro: '+e.message+'</div>';}
+    checkReady();
+  };
+  r.readAsBinaryString(file);
+}
+
+function checkReady(){document.getElementById('btn-rev').disabled=!pdfText;}
+
+async function revisar(){
+  document.getElementById('form-area').style.display='none';
+  const lb=document.getElementById('loading');lb.classList.add('show');
+  const steps=['Extraindo texto do PDF...','Cruzando com planilha RH...','Calculando INSS e IRRF...','Verificando consignados...','Analisando horas extras...','Montando faróis...'];
+  let si=0;const stepEl=document.getElementById('lstep');
+  const iv=setInterval(()=>{if(si<steps.length-1)stepEl.textContent=steps[++si];},3500);
+
+  const p={
+    mes:document.getElementById('mes').value,
+    diasUteis:parseInt(document.getElementById('dias-uteis').value)||22,
+    salMin:parseFloat(document.getElementById('sal-min').value)||1518,
+    limCons:parseFloat(document.getElementById('lim-cons').value)||35,
+    adNot:parseFloat(document.getElementById('ad-not').value)||25,
+    tol:parseFloat(document.getElementById('tolerancia').value)||1,
+  };
+
+  const xlStr=xlData.length>0?JSON.stringify(xlData.slice(0,90)):'Planilha não fornecida.';
+  const pdfTrunc=pdfText.length>30000?pdfText.slice(0,30000)+'\n[PDF truncado]':pdfText;
+
+  const prompt='Você é especialista em folha de pagamento brasileira CLT 2026. Analise a prévia da folha (PDF) cruzando com a planilha de referência do RH e retorne diagnóstico detalhado POR COLABORADOR com farol vermelho/amarelo/verde.\n\nPARÂMETROS:\n- Mês: '+p.mes+' | Dias úteis: '+p.diasUteis+'\n- Salário mínimo: R$ '+p.salMin+'\n- Limite consignado: '+p.limCons+'%\n- Adicional noturno CCT: '+p.adNot+'%\n- Tolerância: R$ '+p.tol+'\n\nTABELA INSS PROGRESSIVA 2026:\nAté R$1.518,00 = 7,5% | Até R$2.793,88 = 9% | Até R$4.190,83 = 12% | Até R$8.157,41 = 14%\n\nTABELA IRRF 2026 (base = bruto − INSS − dependentes*R$189,59):\nIsento até R$2.824,45 | 7,5% até R$3.751,05 (ded R$158,40) | 15% até R$4.664,68 (ded R$455,87) | 22,5% até R$5.351,60 (ded R$806,01) | 27,5% acima (ded R$1.073,82)\n\nPLANILHA REFERÊNCIA RH:\n'+xlStr+'\n\nPRÉVIA DA FOLHA (PDF):\n'+pdfTrunc+'\n\nPARA CADA COLABORADOR verifique:\n1. SALÁRIO BASE: bate com planilha? Se admitido no mês, proporcional correto (sal × dias_trabalhados / '+p.diasUteis+')?\n2. INSS: recalcule progressivo 2026 sobre base INSS da prévia. Diferença > '+p.tol+' = vermelho.\n3. IRRF: descontado/isento corretamente? Diferença > R$5 = vermelho.\n4. HORAS EXTRAS: se planilha tem horas, confira valores (sal_hora × horas × %). Divergência = amarelo.\n5. CONSIGNADO: soma parcelas. Se > '+p.limCons+'% do bruto = vermelho. Se entre '+(p.limCons-5)+'% e '+p.limCons+'% = amarelo.\n6. ADICIONAIS: noturno, periculosidade, insalubridade — se previstos, confira valores.\n7. VT: se previsto na planilha, confira.\n8. LÍQUIDO FINAL: Proventos − Descontos = Líquido? Diferença > '+p.tol+' = vermelho.\n9. PROPORCIONAL: admitidos no mês de referência — cálculo correto?\n\nFAROL:\n- VERMELHO: erro claro, valor diferente do esperado além da tolerância.\n- AMARELO: possível inconsistência ou validação manual necessária.\n- VERDE: tudo confere dentro da tolerância.\n\nRetorne SOMENTE JSON válido (sem markdown):\n{"resumo":"2-3 frases sobre estado geral da folha","total_analisados":0,"total_vermelho":0,"total_amarelo":0,"total_verde":0,"valor_total_proventos":0,"valor_total_liquido":0,"colaboradores":[{"nome":"Nome","cargo":"Cargo","cpf":"000.000.000-00","farol":"verde|amarelo|vermelho","farol_resumo":"Status curto","campos":[{"campo":"Nome do campo","previsto":"Valor esperado","na_previa":"Valor na prévia","status":"verde|amarelo|vermelho","diferenca":"R$ X,XX ou —","nota":"Explicação se não verde"}]}]}';
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:8000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await resp.json();
+    clearInterval(iv);
+    if(data.error)throw new Error(data.error.type+': '+data.error.message);
+    const txt=data.content.map(b=>b.text||'').join('');
+    const clean=txt.replace(/```json|```/g,'').trim();
+    let result;
+    try{result=JSON.parse(clean);}
+    catch(pe){
+      let fx=clean,br=0,bk2=0,inS=false,esc=false;
+      for(const ch of fx){
+        if(esc){esc=false;continue;}if(ch==='\\'){esc=true;continue;}
+        if(ch==='"'){inS=!inS;continue;}if(inS)continue;
+        if(ch==='{')br++;if(ch==='}')br--;if(ch==='[')bk2++;if(ch===']')bk2--;
+      }
+      while(bk2>0){fx+=']';bk2--;}while(br>0){fx+='}';br--;}
+      result=JSON.parse(fx);
+    }
+    renderRes(result,p);
+  }catch(err){
+    clearInterval(iv);
+    lb.classList.remove('show');
+    document.getElementById('form-area').style.display='block';
+    alert('Erro: '+err.message);console.error(err);
+  }
+}
+
+function fmt(v){if(typeof v==='string')return v;return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+
+function renderRes(d,p){
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('res-area').classList.add('show');
+  todos=d.colaboradores||[];
+  document.getElementById('res-meta').textContent=(d.total_analisados||todos.length)+' colaboradores · '+p.mes+' · '+new Date().toLocaleTimeString('pt-BR');
+  document.getElementById('summary').innerHTML='<div class="sum-box red"><div class="sl">🔴 Vermelho</div><div class="sv">'+(d.total_vermelho||0)+'</div></div><div class="sum-box amber"><div class="sl">🟡 Amarelo</div><div class="sv">'+(d.total_amarelo||0)+'</div></div><div class="sum-box green"><div class="sl">🟢 Verde</div><div class="sv">'+(d.total_verde||0)+'</div></div><div class="sum-box"><div class="sl">Total líquido</div><div class="sv" style="font-size:16px">'+fmt(d.valor_total_liquido)+'</div></div>';
+  document.getElementById('ia-box').innerHTML='<strong>Análise geral:</strong> '+d.resumo;
+  document.getElementById('cnt-t').textContent=todos.length;
+  document.getElementById('cnt-r').textContent=todos.filter(c=>c.farol==='vermelho').length;
+  document.getElementById('cnt-a').textContent=todos.filter(c=>c.farol==='amarelo').length;
+  document.getElementById('cnt-v').textContent=todos.filter(c=>c.farol==='verde').length;
+  renderCards(todos);
+}
+
+function renderCards(lista){
+  const c=document.getElementById('cards');
+  if(!lista.length){c.innerHTML='<div style="text-align:center;padding:40px;color:var(--hint);font-size:13px">Nenhum colaborador nesta categoria.</div>';return;}
+  const ord={vermelho:0,amarelo:1,verde:2};
+  const sorted=[...lista].sort((a,b)=>(ord[a.farol]||2)-(ord[b.farol]||2));
+  c.innerHTML=sorted.map((col,i)=>{
+    const f=col.farol||'verde';
+    const campos=col.campos||[];
+    const erros=campos.filter(x=>x.status==='vermelho').length;
+    const warns=campos.filter(x=>x.status==='amarelo').length;
+    const badges=(erros>0?'<span class="badge bv">'+erros+' erro'+(erros>1?'s':'')+'</span>':'')+
+                 (warns>0?'<span class="badge ba">'+warns+' atenção</span>':'')+
+                 (erros===0&&warns===0?'<span class="badge bg">✓ OK</span>':'');
+    const linhas=campos.map(cp=>{
+      const st=cp.status||'verde';
+      const dot=st==='vermelho'?'dr':st==='amarelo'?'da':'dv';
+      const vc=st==='vermelho'?'err':st==='amarelo'?'warn':'ok';
+      const dtag=cp.diferenca&&cp.diferenca!=='—'?'<span class="dtag '+(st==='vermelho'?'dtr':'dta')+'">'+cp.diferenca+'</span>':'';
+      return '<tr><td><span class="dot '+dot+'"></span><span class="cn">'+cp.campo+'</span></td><td class="mv">'+( cp.previsto||'—')+'</td><td class="mv '+vc+'">'+( cp.na_previa||'—')+dtag+'</td><td style="font-size:11px;color:var(--muted);max-width:200px">'+(cp.nota||'')+'</td></tr>';
+    }).join('');
+    return '<div class="colab-card '+f+'" id="cc'+i+'"><div class="colab-header" onclick="document.getElementById(\'cc'+i+'\').classList.toggle(\'open\')"><div class="farol">'+(f==='vermelho'?'🔴':f==='amarelo'?'🟡':'🟢')+'</div><div class="colab-info"><div class="colab-nome">'+(col.nome||'—')+'</div><div class="colab-sub">'+(col.cargo||'')+( col.cpf?' · '+col.cpf:'')+'</div></div><div class="colab-badges">'+badges+'</div><div style="font-size:12px;color:var(--muted);margin-right:8px;flex-shrink:0;max-width:160px;text-align:right">'+(col.farol_resumo||'')+'</div><span class="exp-ico">▼</span></div><div class="colab-body"><table class="campos-table"><thead><tr><th>Campo</th><th>Esperado (referência)</th><th>Na prévia</th><th>Observação</th></tr></thead><tbody>'+linhas+'</tbody></table></div></div>';
+  }).join('');
+}
+
+function filtrar(tipo,btn){
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  renderCards(tipo==='todos'?todos:todos.filter(c=>c.farol===tipo));
+}
+
+async function baixarPDF(){
+  const btn=document.querySelector('.res-btns .btn-sec');btn.textContent='Gerando...';btn.disabled=true;
+  try{
+    const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const area=document.getElementById('res-area');
+    const canvas=await html2canvas(area,{scale:1.4,backgroundColor:'#FDF6EC',logging:false,useCORS:true});
+    const pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight();
+    const mg=12,uw=pw-mg*2,ih=(canvas.height*uw)/canvas.width;
+    let rem=ih,sy=0,pg=0;
+    while(rem>0){
+      if(pg>0)doc.addPage();
+      doc.setFillColor(240,48,64);doc.rect(0,0,pw,16,'F');
+      doc.setTextColor(255,253,248);doc.setFontSize(8);doc.setFont('helvetica','bold');
+      doc.text('ODARA ALFAJORES  ·  REVISÃO DE FOLHA  ·  '+document.getElementById('mes').value,mg,10);
+      const slH=Math.min(rem,ph-20-8);
+      const sl=document.createElement('canvas');sl.width=canvas.width;sl.height=(slH/uw)*canvas.width;
+      sl.getContext('2d').drawImage(canvas,0,sy*canvas.width/uw,canvas.width,sl.height,0,0,canvas.width,sl.height);
+      doc.addImage(sl.toDataURL('image/png'),'PNG',mg,18,uw,slH);sy+=slH;rem-=slH;pg++;
+    }
+    const tot=doc.internal.getNumberOfPages();
+    for(let i=1;i<=tot;i++){doc.setPage(i);doc.setFontSize(7);doc.setTextColor(180,168,158);doc.text('Odara Alfajores · Uso interno · RH',mg,ph-5);doc.text(i+'/'+tot,pw-mg,ph-5,{align:'right'});}
+    doc.save('revisao-folha-'+document.getElementById('mes').value+'.pdf');
+  }catch(e){alert('Erro ao gerar PDF.');}
+  finally{btn.textContent='⬇ Exportar PDF';btn.disabled=false;}
+}
+
+function resetar(){
+  pdfText='';xlData=[];todos=[];
+  document.getElementById('res-area').classList.remove('show');
+  document.getElementById('form-area').style.display='block';
+  document.getElementById('pdf-ok').innerHTML='';
+  document.getElementById('xl-ok').innerHTML='';
+  document.getElementById('cards').innerHTML='';
+  checkReady();
+}
+</script>
+</body>
+</html>
