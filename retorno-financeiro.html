@@ -268,21 +268,33 @@ function processFile(file) {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
 
+      // Localizar linha de cabeçalho — busca flexível por palavras-chave de cliente ou NF
       let headerIdx = -1;
       for (let i = 0; i < raw.length; i++) {
         const r = raw[i];
-        if (r && r.some(c => typeof c === 'string' && c.includes('Nome Fantasia'))) { headerIdx = i; break; }
-        if (r && r.some(c => typeof c === 'string' && c.toLowerCase().includes('nota fiscal'))) { headerIdx = i; break; }
+        if (!r) continue;
+        const hasCliente = r.some(c => typeof c === 'string' && c.toLowerCase().includes('fantasia'));
+        const hasNF = r.some(c => typeof c === 'string' && (c.toLowerCase().includes('nota fiscal') || c.toLowerCase() === 'nf'));
+        const hasTotal = r.some(c => typeof c === 'string' && c.toLowerCase().includes('total'));
+        if (hasCliente || (hasNF && hasTotal)) { headerIdx = i; break; }
       }
       if (headerIdx === -1) headerIdx = 4;
 
       const headers = raw[headerIdx];
-      const ci = (kw) => headers.findIndex(h => h && typeof h === 'string' && h.toLowerCase().includes(kw.toLowerCase()));
-      const colCliente = ci('Nome Fantasia') !== -1 ? ci('Nome Fantasia') : ci('cliente');
-      const colData = ci('Emissão') !== -1 ? ci('Emissão') : ci('data');
-      const colNF = ci('Nota Fiscal') !== -1 ? ci('Nota Fiscal') : ci('nota');
-      const colTotal = ci('Total da Nota') !== -1 ? ci('Total da Nota') : ci('total');
-      const colOp = ci('Operação') !== -1 ? ci('Operação') : ci('operac');
+      // Busca flexível — aceita "Cliente (Nome Fantasia)", "Nome Fantasia", "Cliente" etc.
+      const ci = (kws) => {
+        const list = Array.isArray(kws) ? kws : [kws];
+        for (const kw of list) {
+          const idx = headers.findIndex(h => h && typeof h === 'string' && h.toLowerCase().includes(kw.toLowerCase()));
+          if (idx !== -1) return idx;
+        }
+        return -1;
+      };
+      const colCliente = ci(['fantasia', 'cliente']);
+      const colData = ci(['emiss', 'data']);
+      const colNF = ci(['nota fiscal', 'nota', 'nf']);
+      const colTotal = ci(['total da nota', 'total nota', 'total da nf', 'total nf', 'total']);
+      const colOp = ci(['operação', 'operacao', 'natureza']);
 
       const nfMap = {};
       for (const r of raw.slice(headerIdx + 1)) {
