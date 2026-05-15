@@ -147,7 +147,7 @@ td.mono{font-family:var(--mono);font-size:12px;}
   </div>
 
   <div class="meta-badges">
-    <span class="meta-badge yellow">NCM 1905.31.00</span>
+    <span class="meta-badge yellow">NCM 1905.31.00 · alfajores</span><span class="meta-badge yellow">NCM 1901.90.20 · doce de leite</span>
     <span class="meta-badge yellow">Fee 5% sobre faturamento</span>
     <span class="meta-badge">7 CNPJs monitorados</span>
     <span class="meta-badge">Produtos PP — alfajores</span>
@@ -233,7 +233,7 @@ const CLIENTES = {
 
 // Produtos alfajor: prefixo PP (todos são NCM 1905.31.00)
 // Exceções que não são alfajor apesar de terem PP:
-const PP_EXCECOES = ['PP08016']; // Doce de Leite Pote — não é alfajor
+const PP_EXCECOES = []; // sem exceções — doce de leite (PP08016) incluído via NCM 1901.90.20
 
 const FEE = 0.05;
 let currentFile = null;
@@ -373,6 +373,7 @@ function processFile() {
         } else if (iCod >= 0 && row[iCod]) {
           // Senão, filtrar por código de produto PP
           const cod = String(row[iCod]).trim().toUpperCase();
+          // PP* = alfajores (NCM 1905.31.00) + doce de leite PP08016 (NCM 1901.90.20)
           isAlfajor = cod.startsWith('PP') && !PP_EXCECOES.includes(cod);
         }
 
@@ -465,7 +466,7 @@ function renderResults(totals, period, discNcm, discCnpj, discSit, totalRows) {
 
   // Notas
   var notesHtml = [
-    '<div class="note"><strong>Metodologia</strong>Considera apenas produtos com código <code>PP*</code> (alfajores — NCM 1905.31.00). Produtos de outras categorias (MK, MP, OT) são excluídos automaticamente. Exceção: <code>PP08016</code> (Doce de Leite Pote) excluído por não ser alfajor.</div>',
+    '<div class="note"><strong>Metodologia</strong>Considera produtos com código <code>PP*</code>: alfajores (NCM 1905.31.00) e Doce de Leite Pote <code>PP08016</code> (NCM 1901.90.20). Produtos de outras categorias (MK, MP, OT) são excluídos automaticamente.</div>',
     '<div class="note"><strong>Filtros aplicados</strong>Situação: Autorizado · Produtos: prefixo PP (alfajores) · CNPJs: lista PMI vigente · Fee: ' + (FEE * 100).toFixed(0) + '% sobre Total da Nota Fiscal por linha.</div>',
     '<div class="note"><strong>Linhas processadas</strong>' + totalRows + ' linha(s) de alfajor para CNPJs PMI · ' + discNcm + ' descartada(s) por produto não alfajor · ' + discCnpj + ' descartada(s) por CNPJ fora da lista' + (discSit > 0 ? ' · ' + discSit + ' descartada(s) por situação não autorizada' : '') + '.</div>',
   ];
