@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Comissão PMI — Odara</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --surface: #1a1916;
+    --surface2: #242220;
+    --border: #2e2c29;
+    --gold: #c9a84c;
+    --gold-light: #e8c87a;
+    --gold-dim: #7a6530;
+    --cream: #f0ead8;
+    --cream-dim: #9a9282;
+    --green: #4caf7d;
+    --red: #e05c5c;
+    --white: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 56px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .brand-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--cream);
+    letter-spacing: -0.02em;
+  }
+
+  h1 span {
+    color: var(--gold);
+  }
+
+  .header-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  .ncm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201, 168, 76, 0.1);
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--gold-light);
+    letter-spacing: 0.05em;
+  }
+
+  .ncm-badge::before {
+    content: '◆';
+    font-size: 8px;
+    color: var(--gold);
+  }
+
+  /* Upload Zone */
+  .upload-section {
+    margin-bottom: 48px;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 14px;
+  }
+
+  .upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 40px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--gold-dim);
+    background: rgba(201, 168, 76, 0.04);
+  }
+
+  .upload-zone.has-file {
+    border-style: solid;
+    border-color: var(--gold-dim);
+    background: rgba(201, 168, 76, 0.06);
+  }
+
+  .upload-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.6;
+  }
+
+  .upload-text {
+    font-size: 15px;
+    color: var(--cream-dim);
+    margin-bottom: 6px;
+  }
+
+  .upload-text strong {
+    color: var(--gold-light);
+  }
+
+  .upload-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cream-dim);
+    opacity: 0.5;
+  }
+
+  #fileInput { display: none; }
+
+  .file-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--gold-light);
+    margin-top: 10px;
+    display: none;
+  }
+
+  /* Process Button */
+  .btn-process {
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gold);
+    color: #0f0e0c;
+    border: none;
+    border-radius: 6px;
+    padding: 14px 32px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: none;
+  }
+
+  .btn-process:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+  }
+
+  .btn-process:active { transform: translateY(0); }
+
+  /* Results */
+  #results { display: none; }
+
+  .period-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .period-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .period-title span {
+    color: var(--gold);
+  }
+
+  .total-pill {
+    background: rgba(201, 168, 76, 0.12);
+    border: 1px solid var(--gold-dim);
+    border-radius: 100px;
+    padding: 8px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--gold-light);
+  }
+
+  /* Summary Cards */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    opacity: 0.5;
+  }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--cream-dim);
+    margin-bottom: 8px;
+  }
+
+  .card-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--cream);
+    letter-spacing: -0.02em;
+  }
+
+  .card-value.gold { color: var(--gold-light); }
+  .card-value.green { color: var(--green); }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--cream-dim);
+    padding: 14px 20px;
+    text-align: left;
+    font-weight: 400;
+  }
+
+  th.num { text-align: right; }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(46, 44, 41, 0.6);
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(201, 168, 76, 0.03); }
+
+  td {
+    padding: 16px 20px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  td.cnpj {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--cream-dim);
+  }
+
+  td.company {
+    font-weight: 500;
+    color: var(--cream);
+    font-size: 14px;
+  }
+
+  td.num {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+
+  td.total-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cream);
+    text-align: right;
+  }
+
+  td.fee-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--green);
+    text-align: right;
+  }
+
+  .bar-cell {
+    width: 120px;
+  }
+
+  .bar-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Total row */
+  .total-row td {
+    background: var(--surface2);
+    border-top: 1px solid var(--border) !important;
+    font-weight: 600;
+    padding: 18px 20px;
+  }
+
+  .total-row td.total-val { color: var(--gold-light); font-size: 15px; }
+  .total-row td.fee-val { color: var(--green); font-size: 15px; }
+
+  /* Notes */
+  .notes {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .note {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-size: 12px;
+    color: var(--cream-dim);
+    line-height: 1.6;
+  }
+
+  .note strong {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 6px;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.6;
+  }
+
+  .footer-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cream-dim);
+    opacity: 0.4;
+    text-align: right;
+  }
+
+  /* Error */
+  .error-msg {
+    background: rgba(224, 92, 92, 0.1);
+    border: 1px solid rgba(224, 92, 92, 0.3);
+    border-radius: 6px;
+    padding: 14px 20px;
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 16px;
+    display: none;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Animate in */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in {
+    animation: fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-in:nth-child(2) { animation-delay: 0.06s; }
+  .animate-in:nth-child(3) { animation-delay: 0.12s; }
+  .animate-in:nth-child(4) { animation-delay: 0.18s; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .container { padding: 24px 16px 60px; }
+    header { flex-direction: column; gap: 16px; }
+    .header-meta { align-items: flex-start; }
+    .summary-cards { grid-template-columns: 1fr 1fr; }
+    .summary-cards .card:last-child { grid-column: span 2; }
+    h1 { font-size: 26px; }
+    .notes { flex-direction: column; }
+    .bar-cell { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="brand">
+      <span class="brand-label">Odara · Relatório Executivo</span>
+      <h1>Comissão <span>PMI</span><br>Alfajor 1905.31.00</h1>
+    </div>
+    <div class="header-meta">
+      <div class="ncm-badge">NCM 1905.31.00</div>
+      <div class="ncm-badge" style="margin-top:4px; font-size:11px; opacity:0.7;">Fee 5% sobre faturamento</div>
+    </div>
+  </header>
+
+  <!-- Upload -->
+  <div class="upload-section">
+    <div class="section-label">01 — Carregar Relatório de Faturamento</div>
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📊</div>
+      <div class="upload-text">Arraste o arquivo <strong>.xlsx</strong> ou clique para selecionar</div>
+      <div class="upload-hint">Relatório de faturamento por cliente · Pivot mensal</div>
+      <div class="file-name" id="fileName"></div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+    <button class="btn-process" id="btnProcess" onclick="processFile()">
+      ⚙ Processar Relatório
+    </button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="section-label">02 — Resultado por CNPJ</div>
+
+    <div class="period-header animate-in">
+      <div class="period-title">Faturamento <span id="periodLabel">—</span></div>
+      <div class="total-pill" id="totalPill">Total: R$ —</div>
+    </div>
+
+    <div class="summary-cards animate-in" id="summaryCards"></div>
+
+    <div class="table-wrap animate-in">
+      <table>
+        <thead>
+          <tr>
+            <th>CNPJ</th>
+            <th>Cliente</th>
+            <th class="num">Faturamento (NCM 1905)</th>
+            <th class="num">Fee 5%</th>
+            <th class="bar-cell"></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="notes animate-in">
+      <div class="note">
+        <strong>Metodologia</strong>
+        Considera apenas linhas com NCM <code>1905.31.00</code> (alfajor). Produtos de outras categorias (materiais, embalagens, etc.) são excluídos automaticamente. Valor base: <em>Total da Nota Fiscal</em> por linha de item.
+      </div>
+      <div class="note">
+        <strong>Filtros aplicados</strong>
+        CFOP: 5.101 · 5.102 · 6.101 · 6.102 — Situação: Autorizado — Operação: Novos Pedidos / Remessa de Produto. CNPJs monitorados conforme lista PMI vigente.
+      </div>
+      <div class="note" id="discardedNote">
+        <strong>Linhas descartadas</strong>
+        <span id="discardedText">—</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-brand">Odara</div>
+    <div class="footer-meta" id="footerDate">—</div>
+  </footer>
+
+</div>
+
+<script>
+const CNPJS_PMI = [
+  '03.894.312/0001-84',
+  '07.333.597/0001-35',
+  '05.596.503/0001-95',
+  '05.764.119/0001-54',
+  '07.333.597/0002-16',
+  '07.333.597/0003-05',
+  '01.617.339/0001-02'
+];
+
+const CLIENTES = {
+  '03.894.312/0001-84': 'Flamarsul Distribuidora',
+  '07.333.597/0001-35': 'Germann e Germann (CS)',
+  '05.596.503/0001-95': 'Unisuper Tabacos',
+  '05.764.119/0001-54': 'Altamir Mateos Braido',
+  '07.333.597/0002-16': 'Germann e Germann (PF)',
+  '07.333.597/0003-05': 'Germann e Germann (SC)',
+  '01.617.339/0001-02': 'Fumeta Distribuidora'
+};
+
+const NCM_TARGET = '1905.31.00';
+let currentFile = null;
+
+// Drag & Drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('click', () => document.getElementById('fileInput').click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) setFile(file);
+});
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) setFile(e.target.files[0]);
+});
+
+function setFile(file) {
+  currentFile = file;
+  zone.classList.add('has-file');
+  const fn = document.getElementById('fileName');
+  fn.textContent = '📎 ' + file.name;
+  fn.style.display = 'block';
+  document.getElementById('btnProcess').style.display = 'inline-flex';
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+
+function fmt(val) {
+  return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function processFile() {
+  if (!currentFile) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+      // Find header row
+      let headerRow = -1;
+      for (let i = 0; i < raw.length; i++) {
+        const r = raw[i].map(c => String(c).trim());
+        if (r.includes('CNPJ/CPF') && r.includes('Total da Nota Fiscal')) {
+          headerRow = i;
+          break;
+        }
+      }
+      if (headerRow === -1) { showError('Cabeçalho não encontrado. Verifique se o arquivo é o relatório correto.'); return; }
+
+      const headers = raw[headerRow].map(c => String(c).trim());
+      const iCNPJ = headers.indexOf('CNPJ/CPF');
+      const iNCM  = headers.indexOf('Contagem de Código NCM');
+      const iTotal = headers.indexOf('Total da Nota Fiscal');
+      const iData  = headers.indexOf('Data de Emissão (completa)');
+
+      if (iCNPJ < 0 || iNCM < 0 || iTotal < 0) { showError('Colunas necessárias não encontradas (CNPJ/CPF, NCM, Total da Nota Fiscal).'); return; }
+
+      const totals = {};
+      CNPJS_PMI.forEach(c => totals[c] = 0);
+
+      let totalRows = 0, discardedNcm = 0, discardedCnpj = 0;
+      let dates = [];
+
+      for (let i = headerRow + 1; i < raw.length; i++) {
+        const row = raw[i];
+        const cnpj = String(row[iCNPJ] || '').trim();
+        const ncm  = String(row[iNCM]  || '').trim();
+        const val  = parseFloat(row[iTotal]) || 0;
+        if (!cnpj || !ncm) continue;
+        totalRows++;
+
+        if (ncm !== NCM_TARGET) { discardedNcm++; continue; }
+        if (!CNPJS_PMI.includes(cnpj)) { discardedCnpj++; continue; }
+
+        totals[cnpj] += val;
+
+        if (iData >= 0 && row[iData]) {
+          const d = row[iData];
+          dates.push(typeof d === 'number' ? XLSX.SSF.parse_date_code(d) : d);
+        }
+      }
+
+      // Detect period from filename or data
+      let period = detectPeriod(currentFile.name, dates);
+
+      renderResults(totals, period, discardedNcm, discardedCnpj, totalRows);
+    } catch(err) {
+      showError('Erro ao processar arquivo: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(currentFile);
+}
+
+function detectPeriod(filename, dates) {
+  const months = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const lower = filename.toLowerCase();
+  const monthNames = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  for (let i = 0; i < monthNames.length; i++) {
+    if (lower.includes(monthNames[i])) {
+      const yearMatch = filename.match(/20\d\d/);
+      const year = yearMatch ? yearMatch[0] : new Date().getFullYear();
+      return months[i] + '/' + year;
+    }
+  }
+  return 'Período';
+}
+
+function renderResults(totals, period, discNcm, discCnpj, totalRows) {
+  document.getElementById('errorMsg').style.display = 'none';
+
+  const entries = CNPJS_PMI
+    .map(cnpj => ({ cnpj, name: CLIENTES[cnpj] || cnpj, total: totals[cnpj] || 0 }))
+    .filter(e => e.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  const grandTotal = entries.reduce((s, e) => s + e.total, 0);
+  const totalFee = grandTotal * 0.05;
+  const maxVal = entries[0]?.total || 1;
+
+  document.getElementById('periodLabel').textContent = period;
+  document.getElementById('totalPill').textContent = 'Total: ' + fmt(grandTotal);
+
+  // Summary cards
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="card">
+      <div class="card-label">Faturamento NCM 1905</div>
+      <div class="card-value gold">${fmt(grandTotal)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Fee 5% a repassar</div>
+      <div class="card-value green">${fmt(totalFee)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Clientes ativos</div>
+      <div class="card-value">${entries.length} <span style="font-size:13px;color:var(--cream-dim)">/ ${CNPJS_PMI.length}</span></div>
+    </div>
+  `;
+
+  // Table rows
+  let rows = entries.map(e => `
+    <tr>
+      <td class="cnpj">${e.cnpj}</td>
+      <td class="company">${e.name}</td>
+      <td class="total-val">${fmt(e.total)}</td>
+      <td class="fee-val">${fmt(e.total * 0.05)}</td>
+      <td class="bar-cell">
+        <div class="bar-bg"><div class="bar-fill" style="width:${(e.total/maxVal*100).toFixed(1)}%"></div></div>
+      </td>
+    </tr>
+  `).join('');
+
+  rows += `
+    <tr class="total-row">
+      <td colspan="2" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cream-dim);">Total Geral</td>
+      <td class="total-val">${fmt(grandTotal)}</td>
+      <td class="fee-val">${fmt(totalFee)}</td>
+      <td class="bar-cell"></td>
+    </tr>
+  `;
+
+  document.getElementById('tableBody').innerHTML = rows;
+
+  // Discarded
+  document.getElementById('discardedText').textContent =
+    `${discNcm} linha(s) com NCM diferente de 1905.31.00 · ${discCnpj} linha(s) com CNPJ fora da lista PMI`;
+
+  // Footer date
+  const now = new Date();
+  document.getElementById('footerDate').textContent =
+    `Processado em ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}`;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>

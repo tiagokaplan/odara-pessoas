@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendas E-commerce · Odara</title>
+
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --red:#F03040;--yellow:#F5A623;--bk:#1E1B18;--wh:#FFFDF8;
+  --cream:#FDF6EC;--gray:#F2EDE6;--border:#E8E0D5;--border2:#C8C0B5;
+  --muted:#7A6E65;--hint:#B0A89E;
+  --green:#1E6B45;--gbg:#E8F5EE;--gborder:#A8D5BC;
+  --amber:#7A4A00;--abg:#FDF3DC;--aborder:#E8D4A0;
+  --danger:#8A1A1A;--dbg:#F8E8E8;--dborder:#E8B8B8;
+  --font:'IBM Plex Sans',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --r:6px;--rl:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
+  /* compat com variáveis originais */
+  --bg:var(--cream);--surface:var(--wh);--surface2:var(--gray);
+  --text:var(--bk);--text2:var(--muted);--text3:var(--hint);
+  --accent:var(--red);--accent2:#C02030;
+  --green-bg:var(--gbg);--green-border:var(--gborder);
+  --red-bg:var(--dbg);--amber-bg:var(--abg);--amber-border:var(--aborder);
+  --border-orig:var(--border);
+  --radius:var(--rl);--radius-sm:var(--r);
+  --tag-bg:var(--gray);
+  --font-display:var(--font);--font-body:var(--font);
+  --font-d:var(--font);--font-b:var(--font);
+  --shadow-lg:var(--shadow-md);
+}
+header{background:var(--red);padding:0 40px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.hl{display:flex;align-items:center;gap:16px;}
+.back{font-size:13px;color:rgba(255,255,255,.6);text-decoration:none;font-family:var(--mono);transition:color .15s;}
+.back:hover{color:var(--yellow);}
+.hsep{width:1px;height:16px;background:rgba(255,255,255,.25);}
+.htitle{font-size:14px;font-weight:500;color:#fff;}
+.htag{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.05em;}
+.hbtns{display:flex;align-items:center;gap:8px;}
+/* Substituir topbar original */
+.topbar{display:none!important;}
+
+:root {
+  --bg: #F5F4F0;
+  --surface: #FFFFFF;
+  --surface2: #EFEDE8;
+  --border: #E2DFD8;
+  --border2: #CCC9C0;
+  --text: #1C1B18;
+  --text2: #6A6860;
+  --text3: #9B9890;
+  --accent: #1C1B18;
+  --accent2: #3D3B35;
+  --red: #BF3530;
+  --red-bg: #FDF2F1;
+  --green: #1E6B3C;
+  --green-bg: #EFF7F2;
+  --amber: #7A5200;
+  --amber-bg: #FEF7E8;
+  --amber-border: #F0D990;
+  --tag-bg: #E8E5DE;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'Instrument Sans', sans-serif;
+  --radius: 12px;
+  --radius-sm: 7px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.09), 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--accent);
+  padding: 0 32px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.topbar-logo {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  color: #fff; letter-spacing: .01em;
+}
+.topbar-sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
+.topbar-name {
+  font-size: 13px; font-weight: 500; color: rgba(255,255,255,.7);
+  letter-spacing: .01em;
+}
+.topbar-back {
+  font-size: 12px; color: rgba(255,255,255,.55);
+  text-decoration: none; display: flex; align-items: center; gap: 5px;
+  transition: color .15s;
+}
+.topbar-back:hover { color: rgba(255,255,255,.9); }
+.topbar-back svg { width: 14px; height: 14px; }
+
+/* ── HERO ── */
+.hero {
+  padding: 48px 32px 0;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+.hero-tags { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.tag {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .07em; text-transform: uppercase;
+  background: var(--tag-bg); color: var(--text2);
+  padding: 3px 10px; border-radius: 20px;
+  border: 1px solid var(--border);
+}
+.tag.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 700;
+  letter-spacing: -.02em; line-height: 1.15;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.hero h1 em { font-style: normal; color: var(--text3); }
+.hero-sub {
+  font-size: 14px; color: var(--text2);
+  max-width: 540px; line-height: 1.6;
+}
+
+/* ── MAIN LAYOUT ── */
+.main {
+  max-width: 1160px;
+  margin: 32px auto 80px;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+}
+.card-title {
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text2);
+}
+.card-body { padding: 20px; }
+
+/* ── UPLOAD ── */
+.upload-zone {
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--surface);
+}
+.upload-zone:hover, .upload-zone.drag {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+.upload-icon {
+  width: 52px; height: 52px;
+  background: var(--surface2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+  transition: background .2s;
+}
+.upload-zone:hover .upload-icon { background: var(--border); }
+.upload-icon svg { width: 26px; height: 26px; color: var(--text2); }
+.upload-title {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 600;
+  margin-bottom: 6px;
+}
+.upload-sub { font-size: 13px; color: var(--text3); }
+.upload-sub strong { color: var(--text2); font-weight: 600; }
+
+/* ── METRICS ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.metric {
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  transition: transform .15s;
+}
+.metric:hover { transform: translateY(-1px); }
+.metric-lbl {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text3); margin-bottom: 5px;
+}
+.metric-val {
+  font-family: var(--font-display);
+  font-size: 19px; font-weight: 700;
+  letter-spacing: -.02em; color: var(--text); line-height: 1.1;
+}
+.metric-val.red { color: var(--red); }
+.metric-val.green { color: var(--green); }
+.metric-hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* ── CONTROLS ── */
+.controls {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+.ctrl-group {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 6px 12px;
+}
+.ctrl-group label {
+  font-size: 12px; color: var(--text3); white-space: nowrap;
+}
+select {
+  font-family: var(--font-body); font-size: 13px;
+  color: var(--text); background: transparent;
+  border: none; outline: none; cursor: pointer;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none; transition: all .15s; white-space: nowrap;
+}
+.btn svg { width: 14px; height: 14px; }
+.btn-ghost {
+  background: var(--surface); color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-primary{background:var(--yellow);color:var(--bk);}
+.btn-primary:hover { background: var(--accent2); }
+.count-chip {
+  margin-left: auto;
+  font-size: 12px; color: var(--text3);
+  background: var(--surface2); padding: 4px 10px;
+  border-radius: 20px; border: 1px solid var(--border);
+}
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: var(--surface2);
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap; position: sticky; top: 52px;
+}
+th.r, td.r { text-align: right; }
+th.c, td.c { text-align: center; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover td { background: var(--surface2); }
+tbody tr.devol td { background: var(--red-bg); }
+tbody tr.devol:hover td { background: #fae8e6; }
+td { padding: 9px 12px; vertical-align: middle; }
+td.mono { font-family: 'Courier New', monospace; font-size: 12px; }
+td.nome { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.item { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text2); }
+.devol-tag {
+  display: inline-block; margin-left: 5px;
+  padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 600;
+  background: var(--red-bg); color: var(--red);
+  border: 1px solid #f5c6c2; font-style: normal;
+}
+.val-neg { color: var(--red); font-weight: 500; }
+.cfop-pill {
+  display: inline-block; padding: 1px 7px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  background: var(--tag-bg); color: var(--text2);
+  font-family: 'Courier New', monospace;
+}
+.sistema-pill {
+  display: inline-block; padding: 1px 7px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+  background: var(--accent); color: #fff;
+}
+.sistema-pill.meli { background: #FFED00; color: #1a1a1a; }
+
+/* ── TOTAL ROW ── */
+.total-row td {
+  background: var(--accent) !important;
+  color: #fff !important;
+  font-weight: 600; font-size: 13px;
+  border-top: 2px solid var(--accent);
+}
+.total-row td.r { text-align: right; }
+
+/* ── EMPTY ── */
+.empty {
+  padding: 60px 20px; text-align: center; color: var(--text3);
+}
+.empty svg { width: 40px; height: 40px; display: block; margin: 0 auto 14px; opacity: .4; }
+.empty p { font-size: 14px; }
+
+/* ── PERIOD BANNER ── */
+.period-banner {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 9px;
+  font-size: 13px; color: var(--amber);
+}
+.period-banner svg { width: 15px; height: 15px; flex-shrink: 0; }
+.period-banner strong { font-weight: 600; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--accent); color: #fff;
+  padding: 10px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  transition: transform .3s ease; z-index: 999; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── NOTE ── */
+.note {
+  font-size: 12px; color: var(--text3);
+  display: flex; align-items: flex-start; gap: 7px; margin-top: 14px;
+  padding: 0 4px;
+}
+.note svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 1px; }
+
+.hidden { display: none !important; }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 40px 32px;
+  font-size: 12px; color: var(--text3);
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+}
+.footer span { font-weight: 500; color: var(--text2); }
+
+@media (max-width: 768px) {
+  .topbar { padding: 0 16px; }
+  .hero, .main { padding-left: 16px; padding-right: 16px; }
+  .hero h1 { font-size: 24px; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+  <div class="hl">
+    <a class="back" href="index.html">← voltar</a>
+    <div class="hsep"></div>
+    <span class="htitle">Faturamento E-commerce</span>
+  </div>
+  <div class="hbtns" id="hbtns">
+    <span class="htag">Financeiro</span>
+  </div>
+</header>
+
+
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tags">
+    <span class="tag accent">Financeiro</span>
+    <span class="tag">Faturamento</span>
+    <span class="tag">E-commerce</span>
+    <span class="tag">Fechamento mensal</span>
+  </div>
+  <h1>Vendas <em>E-commerce</em><br>por nota fiscal</h1>
+  <p class="hero-sub">Carregue o relatório de faturamento mensal e extraia automaticamente todas as vendas de e-commerce, nível item, no padrão do relatório fiscal.</p>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- UPLOAD CARD -->
+  <div class="card" id="uploadCard">
+    <div class="card-header">
+      <span class="card-title">Carregar relatório</span>
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Selecionar arquivo
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="upload-zone" id="dropZone"
+        onclick="document.getElementById('fileInput').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="event.preventDefault();this.classList.remove('drag');if(event.dataTransfer.files[0])processFile(event.dataTransfer.files[0])">
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="3" width="20" height="18" rx="2"/>
+            <path d="M8 10h8M8 14h5M8 7h2"/>
+          </svg>
+        </div>
+        <p class="upload-title">Arraste o relatório aqui</p>
+        <p class="upload-sub">Arquivo <strong>.xlsx</strong> exportado do sistema de faturamento (OMIE/MELI) · filtra automaticamente <strong>EQUIPE DE VENDA = E-COMMERCE</strong></p>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden" onchange="if(this.files[0])processFile(this.files[0])">
+    </div>
+  </div>
+
+  <!-- RESULT SECTION -->
+  <div id="resultSection" class="hidden">
+
+    <!-- Period banner -->
+    <div class="period-banner" id="periodBanner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="periodText">Período: <strong>—</strong></span>
+      <span id="fileNameSpan" style="margin-left:auto;font-size:12px;opacity:.6"></span>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics" id="metricsBar"></div>
+
+    <!-- Table card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Itens · nível nota fiscal</span>
+        <div class="controls">
+          <div class="ctrl-group">
+            <label>Sistema</label>
+            <select id="filterSistema" onchange="render()"><option value="">Todos</option></select>
+          </div>
+          <div class="ctrl-group">
+            <label>Natureza</label>
+            <select id="filterNatureza" onchange="render()"><option value="">Todas</option></select>
+          </div>
+          <div class="ctrl-group">
+            <label>Ordenar</label>
+            <select id="sortBy" onchange="render()">
+              <option value="data">Data</option>
+              <option value="nfe">Nota fiscal</option>
+              <option value="nome">Nome A→Z</option>
+              <option value="total_desc">Maior valor</option>
+            </select>
+          </div>
+          <span class="count-chip" id="countChip">— itens</span>
+          <button class="btn btn-ghost hidden" id="btnExport" onclick="exportCSV()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar CSV
+          </button>
+          <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Novo arquivo
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:7%">Sistema</th>
+              <th style="width:9%" class="c">Data</th>
+              <th style="width:7%" class="c">NFE</th>
+              <th style="width:5%" class="c">Série</th>
+              <th style="width:15%">CPF / CNPJ</th>
+              <th style="width:18%">Nome</th>
+              <th style="width:6%" class="c">CFOP</th>
+              <th style="width:20%">Item</th>
+              <th style="width:13%">Conta</th>
+              <th style="width:10%" class="r">Total NFE</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <p class="note" style="padding:12px 16px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Apenas linhas com <strong>EQUIPE DE VENDA = E-COMMERCE</strong> são exibidas. Linhas em vermelho indicam devoluções. O total reflete a soma de todos os itens filtrados.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let allRows = [];
+
+function showToast(msg, duration=2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+      // Find header row
+      let hi = -1;
+      for (let i = 0; i < raw.length; i++) {
+        const r = raw[i];
+        if (r && r.some(c => typeof c === 'string' && c.includes('EQUIPE DE VENDA'))) { hi = i; break; }
+        if (r && r.some(c => typeof c === 'string' && c.toLowerCase().includes('nome fantasia'))) { hi = i; break; }
+      }
+      if (hi === -1) { showToast('Cabeçalho não encontrado. Verifique o arquivo.'); return; }
+
+      const headers = raw[hi];
+      const ci = kw => headers.findIndex(h => h && typeof h === 'string' && h.toLowerCase().includes(kw.toLowerCase()));
+
+      const colSistema   = ci('SISTEMA') !== -1 ? ci('SISTEMA') : 0;
+      const colData      = ci('DATA') !== -1 ? ci('DATA') : 2;
+      const colNFE       = ci('NFE') !== -1 ? ci('NFE') : 3;
+      const colSerie     = ci('SÉRIE') !== -1 ? ci('SÉRIE') : 4;
+      const colCNPJ      = ci('CNPJ') !== -1 ? ci('CNPJ') : 11;
+      const colNome      = ci('Nome Fantasia') !== -1 ? ci('Nome Fantasia') : 9;
+      const colCFOP      = ci('CFOP') !== -1 ? ci('CFOP') : 6;
+      const colNatureza  = ci('NATUREZA') !== -1 ? ci('NATUREZA') : 7;
+      const colProduto   = ci('PRODUTO') !== -1 ? ci('PRODUTO') : 21;
+      const colConta     = ci('Conta') !== -1 ? ci('Conta') : 31;
+      const colTotal     = ci('TOTAL') !== -1 ? ci('TOTAL') : 32;
+      const colEquipe    = ci('EQUIPE') !== -1 ? ci('EQUIPE') : 16;
+
+      allRows = [];
+      for (const r of raw.slice(hi + 1)) {
+        if (!r) continue;
+        const equipe = String(r[colEquipe] || '').trim().toUpperCase();
+        if (equipe !== 'E-COMMERCE') continue;
+        if (!r[colNome] && !r[colNFE]) continue;
+
+        const dv = r[colData];
+        let dataStr = '—';
+        if (dv instanceof Date) dataStr = dv.toLocaleDateString('pt-BR');
+        else if (typeof dv === 'string') dataStr = dv.substring(0, 10);
+
+        allRows.push({
+          sistema:   String(r[colSistema] || '').trim(),
+          data:      dataStr,
+          dataRaw:   dv instanceof Date ? dv : new Date(0),
+          nfe:       r[colNFE] ? String(r[colNFE]).trim() : '—',
+          serie:     r[colSerie] ? String(r[colSerie]).trim() : '—',
+          cpf:       r[colCNPJ] ? String(r[colCNPJ]).trim() : '—',
+          nome:      r[colNome] ? String(r[colNome]).trim() : '—',
+          cfop:      r[colCFOP] ? String(r[colCFOP]).trim() : '—',
+          natureza:  r[colNatureza] ? String(r[colNatureza]).trim() : '—',
+          item:      r[colProduto] ? String(r[colProduto]).trim() : '—',
+          conta:     r[colConta] ? String(r[colConta]).trim() : '—',
+          total:     typeof r[colTotal] === 'number' ? r[colTotal] : parseFloat(r[colTotal]) || 0,
+        });
+      }
+
+      if (!allRows.length) { showToast('Nenhum item com E-COMMERCE encontrado.'); return; }
+
+      // Period
+      const dates = allRows.map(r => r.data).filter(d => d !== '—').sort();
+      const period = dates.length ? (dates[0] === dates[dates.length-1] ? dates[0] : dates[0] + ' a ' + dates[dates.length-1]) : '—';
+      document.getElementById('periodText').innerHTML = `Período: <strong>${period}</strong>`;
+      document.getElementById('fileNameSpan').textContent = file.name;
+
+      // Populate filters
+      const sistemas = [...new Set(allRows.map(r => r.sistema))].sort();
+      const sel1 = document.getElementById('filterSistema');
+      sel1.innerHTML = '<option value="">Todos</option>';
+      sistemas.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel1.appendChild(o); });
+
+      const naturezas = [...new Set(allRows.map(r => r.natureza))].sort();
+      const sel2 = document.getElementById('filterNatureza');
+      sel2.innerHTML = '<option value="">Todas</option>';
+      naturezas.forEach(n => {
+        const o = document.createElement('option'); o.value = n;
+        o.textContent = n.length > 40 ? n.substring(0,40)+'…' : n;
+        sel2.appendChild(o);
+      });
+
+      document.getElementById('uploadCard').classList.add('hidden');
+      document.getElementById('resultSection').classList.remove('hidden');
+      document.getElementById('btnExport').classList.remove('hidden');
+      render();
+      showToast(`${allRows.length} itens carregados`);
+    } catch(err) {
+      showToast('Erro ao ler o arquivo.');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function brl(v) {
+  const abs = Math.abs(v);
+  const str = abs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (v < 0 ? '-' : '') + 'R$ ' + str;
+}
+
+function render() {
+  const fSistema   = document.getElementById('filterSistema').value;
+  const fNatureza  = document.getElementById('filterNatureza').value;
+  const sortBy     = document.getElementById('sortBy').value;
+
+  let data = allRows.filter(r =>
+    (!fSistema  || r.sistema === fSistema) &&
+    (!fNatureza || r.natureza === fNatureza)
+  );
+
+  if (sortBy === 'data')       data.sort((a,b) => a.dataRaw - b.dataRaw);
+  else if (sortBy === 'nfe')   data.sort((a,b) => a.nfe.localeCompare(b.nfe));
+  else if (sortBy === 'nome')  data.sort((a,b) => a.nome.localeCompare(b.nome));
+  else if (sortBy === 'total_desc') data.sort((a,b) => b.total - a.total);
+
+  const totalGeral = data.reduce((s, r) => s + r.total, 0);
+  const totalVenda = data.filter(r => !r.natureza.toLowerCase().includes('devolu') && r.total > 0).reduce((s,r) => s+r.total, 0);
+  const totalDevol = data.filter(r => r.natureza.toLowerCase().includes('devolu') || r.total < 0).reduce((s,r) => s+r.total, 0);
+  const totalBonif = data.filter(r => r.natureza.toLowerCase().includes('bonif')).reduce((s,r) => s+r.total, 0);
+  const qtdNFes    = new Set(data.map(r => r.nfe)).size;
+
+  document.getElementById('metricsBar').innerHTML = `
+    <div class="metric"><div class="metric-lbl">Itens</div><div class="metric-val">${data.length.toLocaleString('pt-BR')}</div><div class="metric-hint">${qtdNFes} notas fiscais</div></div>
+    <div class="metric"><div class="metric-lbl">Total geral</div><div class="metric-val">${brl(totalGeral)}</div><div class="metric-hint">soma de todos os itens</div></div>
+    <div class="metric"><div class="metric-lbl">Vendas</div><div class="metric-val green">${brl(totalVenda)}</div><div class="metric-hint">excl. devol. e bonif.</div></div>
+    <div class="metric"><div class="metric-lbl">Devoluções</div><div class="metric-val red">${brl(totalDevol)}</div><div class="metric-hint">itens negativos</div></div>
+    <div class="metric"><div class="metric-lbl">Bonificações</div><div class="metric-val">${brl(totalBonif)}</div><div class="metric-hint">CFOP 59xx/69xx</div></div>
+  `;
+
+  document.getElementById('countChip').textContent = `${data.length.toLocaleString('pt-BR')} iten${data.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tableBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>Nenhum item encontrado para os filtros selecionados.</p></div></td></tr>`;
+    return;
+  }
+
+  let html = '';
+  data.forEach(r => {
+    const isDevol = r.natureza.toLowerCase().includes('devolu') || r.total < 0;
+    const isMeli  = r.sistema.toUpperCase() === 'MELI';
+    html += `<tr class="${isDevol ? 'devol' : ''}">
+      <td class="c"><span class="sistema-pill ${isMeli ? 'meli' : ''}">${r.sistema}</span></td>
+      <td class="c mono">${r.data}</td>
+      <td class="c mono">${r.nfe}</td>
+      <td class="c mono">${r.serie}</td>
+      <td class="mono" style="font-size:11px;color:var(--text3)">${r.cpf}</td>
+      <td class="nome" title="${r.nome}">${r.nome}${isDevol ? '<span class="devol-tag">devolução</span>' : ''}</td>
+      <td class="c"><span class="cfop-pill">${r.cfop}</span></td>
+      <td class="item" title="${r.item}">${r.item}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.conta}</td>
+      <td class="r mono ${r.total < 0 ? 'val-neg' : ''}">${brl(r.total)}</td>
+    </tr>`;
+  });
+
+  html += `<tr class="total-row">
+    <td colspan="9">Total · ${data.length.toLocaleString('pt-BR')} iten${data.length !== 1 ? 's' : ''} · ${qtdNFes} NF${qtdNFes !== 1 ? 's' : ''}</td>
+    <td class="r mono">${brl(totalGeral)}</td>
+  </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+function exportCSV() {
+  const fSistema  = document.getElementById('filterSistema').value;
+  const fNatureza = document.getElementById('filterNatureza').value;
+  let data = allRows.filter(r =>
+    (!fSistema  || r.sistema === fSistema) &&
+    (!fNatureza || r.natureza === fNatureza)
+  );
+  const lines = [
+    ['SISTEMA','DATA','NFE','SÉRIE','CPF/CNPJ','NOME','CFOP','NATUREZA DE OPERAÇÃO','ITEM','Conta/Nome','TOTAL NFE'].join(';')
+  ];
+  data.forEach(r => {
+    lines.push([r.sistema, r.data, r.nfe, r.serie, r.cpf, r.nome, r.cfop,
+      `"${r.natureza}"`, `"${r.item}"`, `"${r.conta}"`,
+      r.total.toFixed(2).replace('.', ',')].join(';'));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const mes = document.getElementById('periodText').textContent.replace(/[^0-9/]/g, '').replace(/\//g, '-') || 'relatorio';
+  a.download = `ecommerce_odara_${mes}.csv`;
+  a.click();
+  showToast('CSV exportado com sucesso');
+}
+</script>
+</body>
+</html>
