@@ -433,7 +433,7 @@ td.item { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
           </svg>
         </div>
         <p class="upload-title">Arraste o relatório aqui</p>
-        <p class="upload-sub">Arquivo <strong>.xlsx</strong> exportado do sistema de faturamento (OMIE/MELI) · filtra automaticamente <strong>EQUIPE DE VENDA = E-COMMERCE</strong></p>
+        <p class="upload-sub">Arquivo <strong>.xlsx</strong> exportado do sistema de faturamento (OMIE/MELI) · exibe todas as saídas · filtre por <strong>Equipe, Tipo ou Natureza</strong></p>
       </div>
       <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden" onchange="if(this.files[0])processFile(this.files[0])">
     </div>
@@ -457,6 +457,10 @@ td.item { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
       <div class="card-header">
         <span class="card-title">Itens · nível nota fiscal</span>
         <div class="controls">
+          <div class="ctrl-group">
+            <label>Equipe</label>
+            <select id="filterEquipe" onchange="render()"><option value="">Todas</option></select>
+          </div>
           <div class="ctrl-group">
             <label>Sistema</label>
             <select id="filterSistema" onchange="render()"><option value="">Todos</option></select>
@@ -519,7 +523,7 @@ td.item { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
 
       <p class="note" style="padding:12px 16px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Todas as saídas com <strong>EQUIPE DE VENDA = E-COMMERCE</strong> são exibidas: vendas, devoluções, bonificações, remessas e transferências. Linhas em vermelho = devolução. Use o filtro <strong>Tipo</strong> para isolar cada categoria.
+        Todas as saídas são exibidas — use o filtro <strong>Equipe</strong> para isolar E-COMMERCE ou Direto de Fábrica: vendas, devoluções, bonificações, remessas e transferências. Linhas em vermelho = devolução. Use o filtro <strong>Tipo</strong> para isolar cada categoria.
       </p>
     </div>
 
@@ -579,9 +583,8 @@ function processFile(file) {
       allRows = [];
       for (const r of raw.slice(hi + 1)) {
         if (!r) continue;
-        const equipe = String(r[colEquipe] || '').trim().toUpperCase();
-        if (equipe !== 'E-COMMERCE') continue;
         if (!r[colNome] && !r[colNFE]) continue;
+        const equipe = String(r[colEquipe] || '').trim();
 
         const dv = r[colData];
         let dataStr = '—';
@@ -615,10 +618,11 @@ function processFile(file) {
           qtd:       typeof r[colQtd] === 'number' ? r[colQtd] : 0,
           estado:    r[colEstado] ? String(r[colEstado]).trim() : '—',
           tipoSaida: tipoSaida,
+          equipe:    equipe,
         });
       }
 
-      if (!allRows.length) { showToast('Nenhum item com E-COMMERCE encontrado.'); return; }
+      if (!allRows.length) { showToast('Nenhum item encontrado no arquivo.'); return; }
 
       // Period
       const dates = allRows.map(r => r.data).filter(d => d !== '—').sort();
@@ -627,6 +631,11 @@ function processFile(file) {
       document.getElementById('fileNameSpan').textContent = file.name;
 
       // Populate filters
+      const equipes = [...new Set(allRows.map(r => r.equipe))].sort();
+      const sel0 = document.getElementById('filterEquipe');
+      sel0.innerHTML = '<option value="">Todas</option>';
+      equipes.forEach(e => { const o = document.createElement('option'); o.value = e; o.textContent = e; sel0.appendChild(o); });
+
       const sistemas = [...new Set(allRows.map(r => r.sistema))].sort();
       const sel1 = document.getElementById('filterSistema');
       sel1.innerHTML = '<option value="">Todos</option>';
@@ -736,9 +745,13 @@ function render() {
 function exportCSV() {
   const fSistema  = document.getElementById('filterSistema').value;
   const fNatureza = document.getElementById('filterNatureza').value;
+  const fEquipe2 = document.getElementById('filterEquipe').value;
+  const fTipo2   = document.getElementById('filterTipo').value;
   let data = allRows.filter(r =>
+    (!fEquipe2  || r.equipe === fEquipe2) &&
     (!fSistema  || r.sistema === fSistema) &&
-    (!fNatureza || r.natureza === fNatureza)
+    (!fNatureza || r.natureza === fNatureza) &&
+    (!fTipo2    || r.tipoSaida === fTipo2)
   );
   const lines = [
     ['SISTEMA','DATA','NFE','SÉRIE','CPF/CNPJ','NOME','CFOP','NATUREZA DE OPERAÇÃO','ITEM','Conta/Nome','TOTAL NFE'].join(';')
