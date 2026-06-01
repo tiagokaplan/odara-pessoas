@@ -5,7 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Comissão PMI — Odara</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+function exportCSV() {
+  if (!_lastEntries.length) return;
+  var periodoStr = _lastPeriod.replace(/[^a-zA-Z0-9]/g, '_');
+  var grandTotal = _lastEntries.reduce(function(s,e){ return s + e.total; }, 0);
+  var lines = [['Cliente','CNPJ','Faturamento (R$)','Fee 5% (R$)'].join(';')];
+  _lastEntries.forEach(function(e) {
+    lines.push([
+      e.name,
+      e.cnpj,
+      e.total.toFixed(2).replace('.', ','),
+      (e.total * 0.05).toFixed(2).replace('.', ',')
+    ].join(';'));
+  });
+  lines.push(['TOTAL', '', grandTotal.toFixed(2).replace('.', ','), (grandTotal * 0.05).toFixed(2).replace('.', ',')].join(';'));
+  var blob = new Blob(['﻿' + lines.join('
+')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'comissao_pmi_' + periodoStr + '.csv';
+  a.click();
+  showToast('CSV exportado');
+}
+
+function exportXLSX() {
+  if (!_lastEntries.length) return;
+  var periodoStr = _lastPeriod.replace(/[^a-zA-Z0-9]/g, '_');
+  var grandTotal = _lastEntries.reduce(function(s,e){ return s + e.total; }, 0);
+  var aoa = [['Cliente', 'CNPJ', 'Faturamento (R$)', 'Fee 5% (R$)']];
+  _lastEntries.forEach(function(e) {
+    aoa.push([e.name, e.cnpj, e.total, parseFloat((e.total * 0.05).toFixed(2))]);
+  });
+  aoa.push(['TOTAL', '', grandTotal, parseFloat((grandTotal * 0.05).toFixed(2))]);
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  // Larguras das colunas
+  ws['!cols'] = [{wch:30},{wch:22},{wch:20},{wch:16}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Comissao PMI');
+  XLSX.writeFile(wb, 'comissao_pmi_' + periodoStr + '.xlsx');
+  showToast('Excel exportado');
+}
+
+</script>
 <style>
 :root{
   --red:#F03040;--yellow:#F5A623;--bk:#1E1B18;--wh:#FFFDF8;
@@ -27,6 +69,10 @@ header{background:var(--red);padding:0 40px;height:56px;display:flex;align-items
 .hl{display:flex;align-items:center;gap:16px;}
 .back{font-size:13px;color:rgba(255,255,255,.6);text-decoration:none;font-family:var(--mono);transition:color .15s;}
 .back:hover{color:var(--yellow);}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);padding:7px 14px;}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff;}
+.btn-ghost svg{width:14px;height:14px;}
+.btn-ghost.hidden{display:none!important;}
 .hsep{width:1px;height:16px;background:rgba(255,255,255,.25);}
 .htitle{font-size:14px;font-weight:500;color:#fff;}
 .htag{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.05em;}
@@ -134,6 +180,14 @@ td.mono{font-family:var(--mono);font-size:12px;}
       Carregar relatório
     </button>
     <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
+    <button class="btn btn-ghost hidden" id="btnExport" onclick="exportCSV()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar CSV
+    </button>
+    <button class="btn btn-ghost hidden" id="btnExportXlsx" onclick="exportXLSX()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Baixar Excel
+    </button>
     <span class="htag">Financeiro</span>
   </div>
 </header>
@@ -378,10 +432,15 @@ function processFile() {
         }
 
         if (!isAlfajor) { discNcm++; continue; }
-        if (!CNPJS_PMI.includes(cnpj)) { discCnpj++; continue; }
+        // Normalizar CNPJ — aceita com ou sem formatação
+        const cnpjNorm = cnpj.replace(/[.\/\-]/g, '');
+        const cnpjMatch = CNPJS_PMI.find(function(p) {
+          return p === cnpj || p.replace(/[.\/\-]/g, '') === cnpjNorm;
+        });
+        if (!cnpjMatch) { discCnpj++; continue; }
 
         totalRows++;
-        totals[cnpj] += total;
+        totals[cnpjMatch] += total;
 
         // Coletar datas
         if (iData >= 0 && row[iData]) {
@@ -418,6 +477,8 @@ function processFile() {
   reader.readAsArrayBuffer(currentFile);
 }
 
+let _lastEntries = [], _lastPeriod = '';
+
 function renderResults(totals, period, discNcm, discCnpj, discSit, totalRows) {
   document.getElementById('errorBox').style.display = 'none';
 
@@ -427,6 +488,8 @@ function renderResults(totals, period, discNcm, discCnpj, discSit, totalRows) {
     })
     .filter(function(e) { return e.total !== 0; })
     .sort(function(a,b) { return b.total - a.total; });
+  _lastEntries = entries;
+  _lastPeriod = period;
 
   const semMovimento = CNPJS_PMI.filter(function(c) { return !totals[c] || totals[c] === 0; });
 
@@ -478,6 +541,8 @@ function renderResults(totals, period, discNcm, discCnpj, discSit, totalRows) {
 
   document.getElementById('notesArea').innerHTML = notesHtml.join('');
   document.getElementById('results').style.display = 'block';
+  document.getElementById('btnExport').classList.remove('hidden');
+  document.getElementById('btnExportXlsx').classList.remove('hidden');
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   showToast('Relatório processado — ' + entries.length + ' clientes com movimento');
 }
