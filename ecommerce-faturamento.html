@@ -466,6 +466,17 @@ td.item { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
             <select id="filterNatureza" onchange="render()"><option value="">Todas</option></select>
           </div>
           <div class="ctrl-group">
+            <label>Tipo</label>
+            <select id="filterTipo" onchange="render()">
+              <option value="">Todos</option>
+              <option value="Venda">Venda</option>
+              <option value="Devolução">Devolução</option>
+              <option value="Bonificação">Bonificação</option>
+              <option value="Remessa">Remessa</option>
+              <option value="Transferência">Transferência</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
             <label>Ordenar</label>
             <select id="sortBy" onchange="render()">
               <option value="data">Data</option>
@@ -508,7 +519,7 @@ td.item { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-spa
 
       <p class="note" style="padding:12px 16px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Apenas linhas com <strong>EQUIPE DE VENDA = E-COMMERCE</strong> são exibidas. Linhas em vermelho indicam devoluções. O total reflete a soma de todos os itens filtrados.
+        Todas as saídas com <strong>EQUIPE DE VENDA = E-COMMERCE</strong> são exibidas: vendas, devoluções, bonificações, remessas e transferências. Linhas em vermelho = devolução. Use o filtro <strong>Tipo</strong> para isolar cada categoria.
       </p>
     </div>
 
@@ -555,13 +566,15 @@ function processFile(file) {
       const colNFE       = ci('NFE') !== -1 ? ci('NFE') : 3;
       const colSerie     = ci('SÉRIE') !== -1 ? ci('SÉRIE') : 4;
       const colCNPJ      = ci('CNPJ') !== -1 ? ci('CNPJ') : 11;
-      const colNome      = ci('Nome Fantasia') !== -1 ? ci('Nome Fantasia') : 9;
+      const colNome      = ci('NOME FANTASIA') !== -1 ? ci('NOME FANTASIA') : ci('Nome Fantasia') !== -1 ? ci('Nome Fantasia') : 9;
       const colCFOP      = ci('CFOP') !== -1 ? ci('CFOP') : 6;
-      const colNatureza  = ci('NATUREZA') !== -1 ? ci('NATUREZA') : 7;
+      const colNatureza  = ci('NATUREZA DE OPERAÇÃO') !== -1 ? ci('NATUREZA DE OPERAÇÃO') : ci('NATUREZA') !== -1 ? ci('NATUREZA') : 7;
       const colProduto   = ci('PRODUTO') !== -1 ? ci('PRODUTO') : 21;
-      const colConta     = ci('Conta') !== -1 ? ci('Conta') : 31;
-      const colTotal     = ci('TOTAL') !== -1 ? ci('TOTAL') : 32;
-      const colEquipe    = ci('EQUIPE') !== -1 ? ci('EQUIPE') : 16;
+      const colConta     = ci('Conta') !== -1 ? ci('Conta') : ci('CONTA') !== -1 ? ci('CONTA') : 31;
+      const colTotal     = ci('TOTAL NFE') !== -1 ? ci('TOTAL NFE') : ci('TOTAL') !== -1 ? ci('TOTAL') : 32;
+      const colEquipe    = ci('EQUIPE DE VENDA') !== -1 ? ci('EQUIPE DE VENDA') : ci('EQUIPE') !== -1 ? ci('EQUIPE') : 16;
+      const colQtd       = ci('QTD') !== -1 ? ci('QTD') : 22;
+      const colEstado    = ci('ESTADO') !== -1 ? ci('ESTADO') : 14;
 
       allRows = [];
       for (const r of raw.slice(hi + 1)) {
@@ -575,6 +588,17 @@ function processFile(file) {
         if (dv instanceof Date) dataStr = dv.toLocaleDateString('pt-BR');
         else if (typeof dv === 'string') dataStr = dv.substring(0, 10);
 
+        const nat = r[colNatureza] ? String(r[colNatureza]).trim() : '—';
+        const cfopStr = r[colCFOP] ? String(r[colCFOP]).trim() : '—';
+        // Classificar tipo de saída pelo CFOP e natureza
+        let tipoSaida = 'Venda';
+        const cfopN = parseInt(cfopStr) || 0;
+        const natLow = nat.toLowerCase();
+        if (natLow.includes('devolu')) tipoSaida = 'Devolução';
+        else if (natLow.includes('bonif') || natLow.includes('brinde') || natLow.includes('doac')) tipoSaida = 'Bonificação';
+        else if (natLow.includes('remessa') || natLow.includes('deposit') || natLow.includes('armazem')) tipoSaida = 'Remessa';
+        else if (natLow.includes('transfer')) tipoSaida = 'Transferência';
+
         allRows.push({
           sistema:   String(r[colSistema] || '').trim(),
           data:      dataStr,
@@ -583,11 +607,14 @@ function processFile(file) {
           serie:     r[colSerie] ? String(r[colSerie]).trim() : '—',
           cpf:       r[colCNPJ] ? String(r[colCNPJ]).trim() : '—',
           nome:      r[colNome] ? String(r[colNome]).trim() : '—',
-          cfop:      r[colCFOP] ? String(r[colCFOP]).trim() : '—',
-          natureza:  r[colNatureza] ? String(r[colNatureza]).trim() : '—',
+          cfop:      cfopStr,
+          natureza:  nat,
           item:      r[colProduto] ? String(r[colProduto]).trim() : '—',
           conta:     r[colConta] ? String(r[colConta]).trim() : '—',
           total:     typeof r[colTotal] === 'number' ? r[colTotal] : parseFloat(r[colTotal]) || 0,
+          qtd:       typeof r[colQtd] === 'number' ? r[colQtd] : 0,
+          estado:    r[colEstado] ? String(r[colEstado]).trim() : '—',
+          tipoSaida: tipoSaida,
         });
       }
 
@@ -638,9 +665,12 @@ function render() {
   const fNatureza  = document.getElementById('filterNatureza').value;
   const sortBy     = document.getElementById('sortBy').value;
 
+  const fTipo      = document.getElementById('filterTipo').value;
+
   let data = allRows.filter(r =>
     (!fSistema  || r.sistema === fSistema) &&
-    (!fNatureza || r.natureza === fNatureza)
+    (!fNatureza || r.natureza === fNatureza) &&
+    (!fTipo     || r.tipoSaida === fTipo)
   );
 
   if (sortBy === 'data')       data.sort((a,b) => a.dataRaw - b.dataRaw);
@@ -648,19 +678,19 @@ function render() {
   else if (sortBy === 'nome')  data.sort((a,b) => a.nome.localeCompare(b.nome));
   else if (sortBy === 'total_desc') data.sort((a,b) => b.total - a.total);
 
-  const totalGeral = data.reduce((s, r) => s + r.total, 0);
-  const totalVenda = data.filter(r => !r.natureza.toLowerCase().includes('devolu') && r.total > 0).reduce((s,r) => s+r.total, 0);
-  const totalDevol = data.filter(r => r.natureza.toLowerCase().includes('devolu') || r.total < 0).reduce((s,r) => s+r.total, 0);
-  const totalBonif = data.filter(r => r.natureza.toLowerCase().includes('bonif')).reduce((s,r) => s+r.total, 0);
-  const qtdNFes    = new Set(data.map(r => r.nfe)).size;
+  const totalGeral    = data.reduce((s, r) => s + r.total, 0);
+  const totalVenda    = data.filter(r => r.tipoSaida === 'Venda').reduce((s,r) => s+r.total, 0);
+  const totalDevol    = data.filter(r => r.tipoSaida === 'Devolução').reduce((s,r) => s+r.total, 0);
+  const totalBonif    = data.filter(r => r.tipoSaida === 'Bonificação').reduce((s,r) => s+r.total, 0);
+  const totalRemessa  = data.filter(r => r.tipoSaida === 'Remessa' || r.tipoSaida === 'Transferência').reduce((s,r) => s+r.total, 0);
+  const qtdNFes       = new Set(data.map(r => r.nfe)).size;
 
-  document.getElementById('metricsBar').innerHTML = `
-    <div class="metric"><div class="metric-lbl">Itens</div><div class="metric-val">${data.length.toLocaleString('pt-BR')}</div><div class="metric-hint">${qtdNFes} notas fiscais</div></div>
-    <div class="metric"><div class="metric-lbl">Total geral</div><div class="metric-val">${brl(totalGeral)}</div><div class="metric-hint">soma de todos os itens</div></div>
-    <div class="metric"><div class="metric-lbl">Vendas</div><div class="metric-val green">${brl(totalVenda)}</div><div class="metric-hint">excl. devol. e bonif.</div></div>
-    <div class="metric"><div class="metric-lbl">Devoluções</div><div class="metric-val red">${brl(totalDevol)}</div><div class="metric-hint">itens negativos</div></div>
-    <div class="metric"><div class="metric-lbl">Bonificações</div><div class="metric-val">${brl(totalBonif)}</div><div class="metric-hint">CFOP 59xx/69xx</div></div>
-  `;
+  document.getElementById('metricsBar').innerHTML =
+    '<div class="metric"><div class="metric-lbl">Itens</div><div class="metric-val">' + data.length.toLocaleString('pt-BR') + '</div><div class="metric-hint">' + qtdNFes + ' notas fiscais</div></div>' +
+    '<div class="metric"><div class="metric-lbl">Total geral</div><div class="metric-val">' + brl(totalGeral) + '</div><div class="metric-hint">todas as saídas</div></div>' +
+    '<div class="metric"><div class="metric-lbl">Vendas</div><div class="metric-val green">' + brl(totalVenda) + '</div><div class="metric-hint">operações de venda</div></div>' +
+    '<div class="metric"><div class="metric-lbl">Devoluções</div><div class="metric-val red">' + brl(totalDevol) + '</div><div class="metric-hint">CFOP 2xxx/devol.</div></div>' +
+    '<div class="metric"><div class="metric-lbl">Bonif. + Remessas</div><div class="metric-val">' + brl(totalBonif + totalRemessa) + '</div><div class="metric-hint">bonif., remessas e transf.</div></div>';
 
   document.getElementById('countChip').textContent = `${data.length.toLocaleString('pt-BR')} iten${data.length !== 1 ? 's' : ''}`;
 
@@ -672,26 +702,33 @@ function render() {
 
   let html = '';
   data.forEach(r => {
-    const isDevol = r.natureza.toLowerCase().includes('devolu') || r.total < 0;
+    const isDevol = r.tipoSaida === 'Devolução' || r.total < 0;
     const isMeli  = r.sistema.toUpperCase() === 'MELI';
-    html += `<tr class="${isDevol ? 'devol' : ''}">
-      <td class="c"><span class="sistema-pill ${isMeli ? 'meli' : ''}">${r.sistema}</span></td>
-      <td class="c mono">${r.data}</td>
-      <td class="c mono">${r.nfe}</td>
-      <td class="c mono">${r.serie}</td>
-      <td class="mono" style="font-size:11px;color:var(--text3)">${r.cpf}</td>
-      <td class="nome" title="${r.nome}">${r.nome}${isDevol ? '<span class="devol-tag">devolução</span>' : ''}</td>
-      <td class="c"><span class="cfop-pill">${r.cfop}</span></td>
-      <td class="item" title="${r.item}">${r.item}</td>
-      <td style="font-size:12px;color:var(--text2)">${r.conta}</td>
-      <td class="r mono ${r.total < 0 ? 'val-neg' : ''}">${brl(r.total)}</td>
-    </tr>`;
+    const tipoColors = {
+      'Venda':         'background:#E8F5EE;color:#1E6B45',
+      'Devolução':     'background:#F8E8E8;color:#8A1A1A',
+      'Bonificação':   'background:#FDF3DC;color:#7A4A00',
+      'Remessa':       'background:#E8EFF8;color:#1A4A8A',
+      'Transferência': 'background:#F2EDE6;color:#7A6E65',
+    };
+    const tipoStyle = tipoColors[r.tipoSaida] || '';
+    html += '<tr class="' + (isDevol ? 'devol' : '') + '">' +
+      '<td class="c"><span class="sistema-pill ' + (isMeli ? 'meli' : '') + '">' + r.sistema + '</span></td>' +
+      '<td class="c mono">' + r.data + '</td>' +
+      '<td class="c mono">' + r.nfe + '</td>' +
+      '<td class="nome" title="' + r.nome + '">' + r.nome + '</td>' +
+      '<td class="c"><span class="cfop-pill">' + r.cfop + '</span></td>' +
+      '<td><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;' + tipoStyle + '">' + r.tipoSaida + '</span></td>' +
+      '<td class="item" title="' + r.item + '">' + r.item + '</td>' +
+      '<td class="r mono" style="font-size:11px;color:var(--hint)">' + r.qtd + '</td>' +
+      '<td class="r mono ' + (r.total < 0 ? 'val-neg' : '') + '">' + brl(r.total) + '</td>' +
+      '</tr>';
   });
 
-  html += `<tr class="total-row">
-    <td colspan="9">Total · ${data.length.toLocaleString('pt-BR')} iten${data.length !== 1 ? 's' : ''} · ${qtdNFes} NF${qtdNFes !== 1 ? 's' : ''}</td>
-    <td class="r mono">${brl(totalGeral)}</td>
-  </tr>`;
+  html += '<tr class="total-row">' +
+    '<td colspan="8">Total · ' + data.length.toLocaleString('pt-BR') + ' iten' + (data.length !== 1 ? 's' : '') + ' · ' + qtdNFes + ' NF' + (qtdNFes !== 1 ? 's' : '') + '</td>' +
+    '<td class="r mono">' + brl(totalGeral) + '</td>' +
+    '</tr>';
 
   tbody.innerHTML = html;
 }
