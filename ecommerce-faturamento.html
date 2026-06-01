@@ -572,9 +572,10 @@ function processFile(file) {
       const colNome      = ci('NOME FANTASIA') !== -1 ? ci('NOME FANTASIA') : ci('Nome Fantasia') !== -1 ? ci('Nome Fantasia') : 9;
       const colCFOP      = ci('CFOP') !== -1 ? ci('CFOP') : 6;
       const colNatureza  = ci('NATUREZA DE OPERAÇÃO') !== -1 ? ci('NATUREZA DE OPERAÇÃO') : ci('NATUREZA') !== -1 ? ci('NATUREZA') : 7;
-      // Coluna PRODUTO no cabeçalho contém a descrição do item (ex: "ALFAJOR CROCANTE ODARA...")
-      // Coluna ID PROD contém o código do produto (ex: "PP26002")
-      const colProduto   = ci('PRODUTO') !== -1 ? ci('PRODUTO') : ci('DESCRI') !== -1 ? ci('DESCRI') : 21;
+      // Coluna PRODUTO contém a descrição do item (ex: "ALFAJOR CROCANTE ODARA...")
+      // Usa match exato para não bater em IDPRODUTOGERAL que vem antes no cabeçalho
+      const ciExact = kw => headers.findIndex(h => h && typeof h === 'string' && h.trim().toUpperCase() === kw.toUpperCase());
+      const colProduto   = ciExact('PRODUTO') !== -1 ? ciExact('PRODUTO') : 21;
       const colConta     = ci('Conta') !== -1 ? ci('Conta') : ci('CONTA') !== -1 ? ci('CONTA') : 31;
       const colTotal     = ci('TOTAL NFE') !== -1 ? ci('TOTAL NFE') : ci('TOTAL') !== -1 ? ci('TOTAL') : 32;
       const colEquipe    = ci('EQUIPE DE VENDA') !== -1 ? ci('EQUIPE DE VENDA') : ci('EQUIPE') !== -1 ? ci('EQUIPE') : 16;
