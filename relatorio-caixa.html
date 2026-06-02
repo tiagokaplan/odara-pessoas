@@ -394,11 +394,12 @@ Não inclua texto antes ou depois do JSON.`,
 O saldo inicial é o "Saldo Anterior" e o saldo final é o último "S A L D O" indicado. Não inclua texto antes ou depois do JSON.`,
 
   aplicacao: `Você é um extrator de dados financeiros. Leia este extrato de aplicação financeira SICREDINVEST e retorne SOMENTE um JSON válido no formato:
-{"saldo_inicial": NUMBER, "saldo_final": NUMBER, "banco": "Aplicação SICREDINVEST", "periodo": "string", "conta": "SICREDINVEST"}
-REGRAS — siga exatamente:
-- saldo_inicial: localize a tabela mensal de movimentações. Pegue a linha do penúltimo mês listado (o mês ANTES do último). Some o valor da coluna "Saldo Atual" dessa linha com o valor da coluna "Acumulado" dessa mesma linha. Esse é o saldo_inicial.
-- saldo_final: localize a seção "Posição para Saque" no final do documento. Use o valor do campo "Saldo Bruto" como saldo_final.
-- Retorne os valores como NUMBER (ponto decimal, sem pontos de milhar). Ex: 3088468.73
+{"penultimo_saldo_atual": NUMBER, "penultimo_acumulado": NUMBER, "saldo_bruto_final": NUMBER, "banco": "Aplicação SICREDINVEST", "periodo": "string", "conta": "SICREDINVEST"}
+REGRAS — extraia exatamente estes campos:
+- penultimo_saldo_atual: na tabela mensal de movimentações, localize o penúltimo mês listado (a linha imediatamente acima da linha "Totais"). Extraia o valor da coluna "Saldo Atual" dessa linha.
+- penultimo_acumulado: na mesma linha do penúltimo mês, extraia o valor da coluna "Acumulado" (Rendimentos Provisionados Acumulado).
+- saldo_bruto_final: na seção "Posição para Saque" no final do documento, extraia o valor do campo "Saldo Bruto".
+- Todos os valores como NUMBER com ponto decimal, sem pontos de milhar nem R$. Ex: 2560529.26
 - Não inclua nenhum texto antes ou depois do JSON.`,
 
   sicredisp: `Você é um extrator de dados financeiros. Leia este extrato do Sicredi Filial SP (conta 64106-0) e retorne SOMENTE um JSON válido no formato:
@@ -492,7 +493,21 @@ async function extractFromPDF(id, file) {
   const text = data.content?.map(c => c.text || '').join('') || '';
   if (!text) throw new Error('Resposta vazia da API');
   const clean = text.replace(/```json[\s\S]*?```|```/g, '').trim();
-  return JSON.parse(clean);
+  const parsed = JSON.parse(clean);
+
+  // Para aplicação financeira: calcular saldo_inicial no JS (soma de dois campos)
+  if (id === 'aplicacao') {
+    const ini = (parsed.penultimo_saldo_atual || 0) + (parsed.penultimo_acumulado || 0);
+    return {
+      saldo_inicial: Math.round(ini * 100) / 100,
+      saldo_final: parsed.saldo_bruto_final,
+      banco: parsed.banco,
+      periodo: parsed.periodo,
+      conta: parsed.conta
+    };
+  }
+
+  return parsed;
 }
 
 async function processar() {
