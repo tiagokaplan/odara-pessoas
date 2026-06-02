@@ -383,7 +383,11 @@ Extraia o Saldo inicial e o Saldo final exatamente como aparecem no documento. N
 
   sicredi: `Você é um extrator de dados financeiros. Leia este extrato do Sicredi (conta corrente 84613-9) e retorne SOMENTE um JSON válido no formato:
 {"saldo_inicial": NUMBER, "saldo_final": NUMBER, "banco": "Sicredi Matriz", "periodo": "string", "conta": "84613-9"}
-O saldo inicial é o "SALDO ANTERIOR" e o saldo final é o último saldo da última linha de movimento do mês. Não inclua texto antes ou depois do JSON.`,
+REGRAS IMPORTANTES:
+- O saldo inicial é o valor da linha "SALDO ANTERIOR" no início do extrato (antes de qualquer lançamento).
+- O saldo final é o saldo da ÚLTIMA linha de lançamento efetivo do mês (ignorar completamente a seção "Lançamentos Futuros" que aparece ao final do documento — esses valores não devem ser considerados).
+- Use apenas números sem formatação (ex: 1061860.52, não "1.061.860,52").
+Não inclua texto antes ou depois do JSON.`,
 
   bb: `Você é um extrator de dados financeiros. Leia este extrato do Banco do Brasil e retorne SOMENTE um JSON válido no formato:
 {"saldo_inicial": NUMBER, "saldo_final": NUMBER, "banco": "Banco do Brasil", "periodo": "string", "conta": "string"}
@@ -391,8 +395,11 @@ O saldo inicial é o "Saldo Anterior" e o saldo final é o último "S A L D O" i
 
   aplicacao: `Você é um extrator de dados financeiros. Leia este extrato de aplicação financeira SICREDINVEST e retorne SOMENTE um JSON válido no formato:
 {"saldo_inicial": NUMBER, "saldo_final": NUMBER, "banco": "Aplicação SICREDINVEST", "periodo": "string", "conta": "SICREDINVEST"}
-O saldo inicial é calculado como: saldo do mês anterior ao período solicitado (março/2026) + rendimentos provisionados acumulados até esse mês.
-O saldo final é o "Saldo Bruto" mostrado na seção "Posição para Saque". Não inclua texto antes ou depois do JSON.`,
+REGRAS — siga exatamente:
+- saldo_inicial: localize a tabela mensal de movimentações. Pegue a linha do penúltimo mês listado (o mês ANTES do último). Some o valor da coluna "Saldo Atual" dessa linha com o valor da coluna "Acumulado" dessa mesma linha. Esse é o saldo_inicial.
+- saldo_final: localize a seção "Posição para Saque" no final do documento. Use o valor do campo "Saldo Bruto" como saldo_final.
+- Retorne os valores como NUMBER (ponto decimal, sem pontos de milhar). Ex: 3088468.73
+- Não inclua nenhum texto antes ou depois do JSON.`,
 
   sicredisp: `Você é um extrator de dados financeiros. Leia este extrato do Sicredi Filial SP (conta 64106-0) e retorne SOMENTE um JSON válido no formato:
 {"saldo_inicial": NUMBER, "saldo_final": NUMBER, "banco": "Sicredi Filial SP", "periodo": "string", "conta": "64106-0"}
@@ -458,7 +465,11 @@ async function extractFromPDF(id, file) {
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'pdfs-2024-09-25'
+    },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
@@ -472,9 +483,15 @@ async function extractFromPDF(id, file) {
     })
   });
 
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error('API erro ' + response.status + ': ' + err.substring(0, 200));
+  }
+
   const data = await response.json();
   const text = data.content?.map(c => c.text || '').join('') || '';
-  const clean = text.replace(/```json|```/g, '').trim();
+  if (!text) throw new Error('Resposta vazia da API');
+  const clean = text.replace(/```json[\s\S]*?```|```/g, '').trim();
   return JSON.parse(clean);
 }
 
@@ -504,13 +521,19 @@ async function processar() {
       results[id] = { ...res, ok: true };
     } catch (e) {
       results[id] = { saldo_inicial: null, saldo_final: null, banco: ACCOUNTS[id].label, ok: false, erro: String(e) };
+      showStatus('err', `Erro em ${ACCOUNTS[id].label}: ${String(e).substring(0,120)}`);
     }
     done++;
     setProgress(Math.round(10 + (done / total) * 85));
   }
 
+  const erros = Object.values(results).filter(r => !r.ok).length;
   setProgress(100);
-  showStatus('ok', `Extração concluída — ${done} extrato${done > 1 ? 's' : ''} processado${done > 1 ? 's' : ''}.`);
+  if (erros === 0) {
+    showStatus('ok', `Extração concluída — ${done} extrato${done > 1 ? 's' : ''} processado${done > 1 ? 's' : ''}.`);
+  } else {
+    showStatus('err', `${erros} extrato${erros > 1 ? 's' : ''} com erro — verifique os campos marcados.`);
+  }
   renderResult(periodo);
 
   document.getElementById('btnProcessar').innerHTML = `
